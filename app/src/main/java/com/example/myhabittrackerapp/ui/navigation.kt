@@ -62,6 +62,17 @@ fun MainScreen(
                         modifier = modifier.fillMaxWidth()
                     ) {
                         NavigationRailItem(
+                            selected = currentRoute == "habit",
+                            onClick = {
+                                navController.navigate("Habit") {
+                                    popUpTo(navController.graph.startDestinationId)
+                                    launchSingleTop = true
+                                }
+                            },
+                            icon = { Icon(Icons.Outlined.CheckCircle, contentDescription = "Home") },
+                            label = { Text("Habit") }
+                        )
+                        NavigationRailItem(
                             selected = currentRoute == "journal",
                             onClick = {
                                 navController.navigate("journal") {
@@ -82,17 +93,6 @@ fun MainScreen(
                             },
                             icon = { Icon(Icons.Outlined.Explore, contentDescription = "Discover") },
                             label = { Text("Discover") }
-                        )
-                        NavigationRailItem(
-                            selected = currentRoute == "habit",
-                            onClick = {
-                                navController.navigate("Habit") {
-                                    popUpTo(navController.graph.startDestinationId)
-                                    launchSingleTop = true
-                                }
-                            },
-                            icon = { Icon(Icons.Outlined.CheckCircle, contentDescription = "Home") },
-                            label = { Text("Habit") }
                         )
                         NavigationRailItem(
                             selected = currentRoute == "home",
