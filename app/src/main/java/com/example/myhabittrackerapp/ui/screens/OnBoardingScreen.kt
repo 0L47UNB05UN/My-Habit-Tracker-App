@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,7 +39,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -67,20 +67,15 @@ import com.example.myhabittrackerapp.ui.theme.spacing
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
+    paddingValues: PaddingValues,
     onStartJourney: () -> Unit = {}
 ) {
     var userName by remember { mutableStateOf("") }
     var habitInput by remember { mutableStateOf("") }
     val habits = remember { mutableStateOf(listOf("Read for 10 mins", "No coffee after 2pm")) }
-
-    Scaffold(
+    Surface(
         modifier = Modifier.fillMaxSize(),
-        bottomBar = {
-            BottomSection(
-                onStartJourney = onStartJourney
-            )
-        }
-    ) { paddingValues ->
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,7 +88,8 @@ fun OnboardingScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                alpha = 0.3f
             )
         }
         LazyColumn(
@@ -132,7 +128,12 @@ fun OnboardingScreen(
 
             item {
                 Spacer(modifier = Modifier.height(32.dp))
+
             }
+            item {
+                BottomSection(onStartJourney = onStartJourney)
+            }
+
         }
     }
 }
@@ -525,7 +526,7 @@ fun OnboardingScreenPreview() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            OnboardingScreen()
+            OnboardingScreen(PaddingValues())
         }
     }
 }

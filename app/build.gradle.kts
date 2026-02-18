@@ -52,11 +52,14 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.foundation.layout)
 
     // HILT (Dependency Injection)
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("com.google.dagger:hilt-android:2.48")
+    implementation(libs.protolite.well.known.types)
+
     kapt("com.google.dagger:hilt-compiler:2.48")
 
     // Hilt Navigation (if using Navigation Component)

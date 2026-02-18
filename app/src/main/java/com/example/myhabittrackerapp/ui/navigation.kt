@@ -1,0 +1,139 @@
+package com.example.myhabittrackerapp.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.runtime.Composable
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.getValue
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.example.myhabittrackerapp.ui.screens.OnboardingScreen
+import com.example.myhabittrackerapp.ui.screens.DiscoverScreen
+import com.example.myhabittrackerapp.ui.screens.JournalScreen
+import com.example.myhabittrackerapp.ui.screens.MyHabitsScreen
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreen(
+    modifier: Modifier = Modifier
+) {
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        bottomBar = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = modifier.fillMaxWidth()
+            ){
+                NavigationBar(
+                    modifier = modifier.fillMaxWidth(),
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                    tonalElevation = 8.dp
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = modifier.fillMaxWidth()
+                    ) {
+                        NavigationRailItem(
+                            selected = currentRoute == "journal",
+                            onClick = {
+                                navController.navigate("journal") {
+                                    popUpTo(navController.graph.startDestinationId)
+                                    launchSingleTop = true
+                                }
+                            },
+                            icon = { Icon(Icons.Outlined.Book, contentDescription = "Journal") },
+                            label = { Text("Journal") }
+                        )
+                        NavigationRailItem(
+                            selected = currentRoute == "discover",
+                            onClick = {
+                                navController.navigate("discover") {
+                                    popUpTo(navController.graph.startDestinationId)
+                                    launchSingleTop = true
+                                }
+                            },
+                            icon = { Icon(Icons.Outlined.Explore, contentDescription = "Discover") },
+                            label = { Text("Discover") }
+                        )
+                        NavigationRailItem(
+                            selected = currentRoute == "habit",
+                            onClick = {
+                                navController.navigate("Habit") {
+                                    popUpTo(navController.graph.startDestinationId)
+                                    launchSingleTop = true
+                                }
+                            },
+                            icon = { Icon(Icons.Outlined.CheckCircle, contentDescription = "Home") },
+                            label = { Text("Habit") }
+                        )
+                        NavigationRailItem(
+                            selected = currentRoute == "home",
+                            onClick = {
+                                navController.navigate("home") {
+                                    popUpTo(navController.graph.startDestinationId)
+                                    launchSingleTop = true
+                            }
+                            },
+                            icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
+                            label = { Text("Home") }
+                        )
+                    }
+                }
+            }
+        },
+
+    ) {
+        paddingValues ->
+        NavHost(
+            navController = navController,
+            startDestination = "home",
+        ) {
+            composable("home") {
+                OnboardingScreen(paddingValues)
+            }
+            composable("discover") {
+                DiscoverScreen()
+            }
+            composable("journal"){
+                JournalScreen()
+            }
+            composable("habit"){
+                MyHabitsScreen()
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun MainScreenPreview(){
+    MainScreen()
+}
