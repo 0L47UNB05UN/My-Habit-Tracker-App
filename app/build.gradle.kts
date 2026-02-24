@@ -59,6 +59,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("com.google.dagger:hilt-android:2.48")
     implementation(libs.protolite.well.known.types)
+    implementation(libs.vision.internal.vkp)
 
     kapt("com.google.dagger:hilt-compiler:2.48")
 
