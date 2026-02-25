@@ -1,5 +1,6 @@
 package com.example.myhabittrackerapp.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,10 +29,6 @@ import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.AddCircle
 import androidx.compose.material.icons.outlined.DoNotDisturbOn
-import androidx.compose.material.icons.outlined.Fastfood
-import androidx.compose.material.icons.outlined.SelfImprovement
-import androidx.compose.material.icons.outlined.Smartphone
-import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -51,17 +48,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.myhabittrackerapp.ui.theme.MyHabitTrackerAppTheme
+import com.example.myhabittrackerapp.model.HabitType
 import com.example.myhabittrackerapp.ui.theme.spacing
 
 
 @Composable
-fun MyHabitsScreen() {
+fun MyHabitsScreen(
+    appViewModel: HabitScreenSettingsViewModel,
+    onNavigate: () -> Unit = {}
+) {
     var selectedTab by remember { mutableStateOf(Tab.Today) }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -102,25 +100,22 @@ fun MyHabitsScreen() {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(spacing.large)
                     ) {
-                        // Drink Water
-                        HabitCard(
-                            icon = Icons.Outlined.WaterDrop,
-                            title = "Drink Water",
-                            subtitle = "Daily goal: 8 glasses",
-                            color = MaterialTheme.colorScheme.primary,
-                            toStart = true
-                        )
-                        // Morning Meditate
-                        HabitCard(
-                            icon = Icons.Outlined.SelfImprovement,
-                            title = "Morning Meditate",
-                            subtitle = "10 mins • 4/7 days streak",
-                            color = MaterialTheme.colorScheme.primary,
-                            toStart = true
-                        )
+                        appViewModel.habits.value.filter { habit -> habit.habitType == HabitType.Start }.forEach { habits ->
+                            HabitCard(
+                                title = habits.title,
+                                subtitle = habits.subtitle,
+                                color = habits.color,
+                                habitType = habits.habitType,
+                                icon = habits.icon,
+                                onNavigate = {
+                                    appViewModel.currentHabit = habits
+                                    onNavigate()
+                                }
+                            )
+                        }
                     }
                 }
-                // To Stop Section
+
                 item {
                     HabitSection(
                         title = "To Stop",
@@ -132,22 +127,16 @@ fun MyHabitsScreen() {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(spacing.large)
                     ) {
-                        // Late Night Snacking
-                        HabitCard(
-                            icon = Icons.Outlined.Fastfood,
-                            title = "Late Night Snacking",
-                            subtitle = "Avoid after 9:00 PM",
-                            color = Color.Red,
-                            toStart = false
-                        )
-                        // Excessive Social Media
-                        HabitCard(
-                            icon = Icons.Outlined.Smartphone,
-                            title = "Excessive Social Media",
-                            subtitle = "Limit to 30 mins daily",
-                            color = Color.Red,
-                            toStart = false
-                        )
+                        appViewModel.habits.value.filter { habit -> habit.habitType == HabitType.Stop }.forEach { habits ->
+                            HabitCard(
+                                title = habits.title,
+                                subtitle = habits.subtitle,
+                                color = habits.color,
+                                habitType = habits.habitType,
+                                icon = habits.icon,
+                                onNavigate = { appViewModel.currentHabit = habits; onNavigate() }
+                            )
+                        }
                     }
                 }
             }
@@ -283,10 +272,14 @@ fun HabitCard(
     title: String,
     subtitle: String,
     color: Color,
-    toStart: Boolean
+    habitType: HabitType,
+    onNavigate: () -> Unit
 ){
     Card(
-        modifier = Modifier.fillMaxWidth().height(105.dp),
+        onClick = onNavigate,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(105.dp),
         shape = RoundedCornerShape(spacing.xLarge),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -349,9 +342,10 @@ fun HabitCard(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth()
                 ){Icon(
-                    imageVector = if (toStart) Icons.Filled.CheckCircle else Icons.Filled.Block,
+                    imageVector = if (habitType == HabitType.Start) Icons.Filled.CheckCircle else Icons.Filled.Block,
                     contentDescription = null,
-                    modifier = Modifier.padding(end=spacing.large)
+                    modifier = Modifier
+                        .padding(end = spacing.large)
                         .requiredSize(spacing.xLarge),
                     tint = color
                 )}
@@ -374,10 +368,7 @@ private fun FloatingAddButton() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            shape = RoundedCornerShape(spacing.xLarge),
-//            colors = ButtonDefaults.buttonColors(
-//                containerColor = MaterialTheme.colorScheme.primary
-//            )
+            shape = RoundedCornerShape(spacing.xLarge)
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
@@ -401,12 +392,12 @@ enum class Tab(val title: String) {
 }
 
 // Preview
-@Preview
-@Composable
-fun MyHabitsScreenPreview() {
-    MyHabitTrackerAppTheme(
-        darkTheme = true
-    ) {
-        MyHabitsScreen()
-    }
-}
+//@Preview
+//@Composable
+//fun MyHabitsScreenPreview() {
+//    MyHabitTrackerAppTheme(
+//        darkTheme = true
+//    ) {
+//        MyHabitsScreen()
+//    }
+//}

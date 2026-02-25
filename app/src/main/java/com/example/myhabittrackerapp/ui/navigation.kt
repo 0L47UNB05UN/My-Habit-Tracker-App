@@ -25,11 +25,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.myhabittrackerapp.ui.screens.DiscoverScreen
+import com.example.myhabittrackerapp.ui.screens.HabitScreenSettingsViewModel
+import com.example.myhabittrackerapp.ui.screens.HabitSettingsScreen
 import com.example.myhabittrackerapp.ui.screens.JournalScreen
 import com.example.myhabittrackerapp.ui.screens.MyHabitsScreen
 import com.example.myhabittrackerapp.ui.screens.OnboardingScreen
@@ -44,6 +47,7 @@ fun MainScreen(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val habitScreenViewModel: HabitScreenSettingsViewModel = viewModel()
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
@@ -141,7 +145,15 @@ fun MainScreen(
                 SettingsScreen()
             }
             composable("habit"){
-                MyHabitsScreen()
+                MyHabitsScreen(habitScreenViewModel, onNavigate = { navController.navigate("habitSetting")})
+            }
+            composable("habitSetting"){
+                HabitSettingsScreen(
+                    habitScreenViewModel,
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
             }
         }
     }
