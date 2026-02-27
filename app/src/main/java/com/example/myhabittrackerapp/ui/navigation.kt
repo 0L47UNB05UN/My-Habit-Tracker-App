@@ -136,7 +136,12 @@ fun MainScreen(
                 OnboardingScreen(paddingValues)
             }
             composable("discover") {
-                DiscoverScreen()
+                DiscoverScreen(
+                    onHabitClick = {
+                        habitScreenViewModel.markCurrentHabit(it)
+                        navController.navigate("habitSetting")
+                    }
+                )
             }
             composable("journal"){
                 JournalScreen()
@@ -145,7 +150,12 @@ fun MainScreen(
                 SettingsScreen()
             }
             composable("habit"){
-                MyHabitsScreen(habitScreenViewModel, onNavigate = { navController.navigate("habitSetting")})
+                MyHabitsScreen(
+                    habitScreenViewModel,
+                    onNavigate = {
+                        navController.navigate("habitSetting")
+                    }
+                )
             }
             composable("habitSetting"){
                 HabitSettingsScreen(

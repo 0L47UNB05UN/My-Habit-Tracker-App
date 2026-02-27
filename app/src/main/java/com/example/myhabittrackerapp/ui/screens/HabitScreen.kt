@@ -1,9 +1,6 @@
 package com.example.myhabittrackerapp.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,10 +34,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,7 +52,6 @@ fun MyHabitsScreen(
     appViewModel: HabitScreenSettingsViewModel,
     onNavigate: () -> Unit = {}
 ) {
-    var selectedTab by remember { mutableStateOf(Tab.Today) }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -72,11 +64,6 @@ fun MyHabitsScreen(
         ) {
             // Header
             MyHabitsHeader()
-            // Tabs
-            MyHabitsTabs(
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it }
-            )
             // Content
             LazyColumn(
                 modifier = Modifier
@@ -108,7 +95,7 @@ fun MyHabitsScreen(
                                 habitType = habits.habitType,
                                 icon = habits.icon,
                                 onNavigate = {
-                                    appViewModel.currentHabit = habits
+                                    appViewModel.markCurrentHabit(habits)
                                     onNavigate()
                                 }
                             )
@@ -134,14 +121,14 @@ fun MyHabitsScreen(
                                 color = habits.color,
                                 habitType = habits.habitType,
                                 icon = habits.icon,
-                                onNavigate = { appViewModel.currentHabit = habits; onNavigate() }
+                                onNavigate = { appViewModel.markCurrentHabit(habits); onNavigate() }
                             )
                         }
                     }
                 }
             }
         }
-        FloatingAddButton()
+        FloatingAddButton({appViewModel.resetCurrentHabit()}, onNavigate)
     }
 }
 
@@ -176,67 +163,6 @@ private fun MyHabitsHeader() {
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
-    }
-}
-
-@Composable
-private fun MyHabitsTabs(
-    selectedTab: Tab,
-    onTabSelected: (Tab) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = spacing.xLarge)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(0.dp)
-            )
-    ) {
-        Tab.entries.forEach { tab ->
-            TabItem(
-                title = tab.title,
-                isSelected = selectedTab == tab,
-                onClick = { onTabSelected(tab) },
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun TabItem(
-    title: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.clickable { onClick() }
-    ) {
-        Text(
-            text = title,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = if (isSelected)
-                MaterialTheme.colorScheme.primary
-            else
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(2.dp)
-                .padding(top = spacing.medium)
-                .background(
-                    color = if (isSelected)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        Color.Transparent
-                )
-        )
     }
 }
 
@@ -288,7 +214,6 @@ fun HabitCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth(),
-//                .padding(spacing.large),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -355,7 +280,10 @@ fun HabitCard(
 }
 
 @Composable
-private fun FloatingAddButton() {
+private fun FloatingAddButton(
+    onClick: () -> Unit,
+    onNavigate: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -364,7 +292,7 @@ private fun FloatingAddButton() {
         contentAlignment = Alignment.BottomCenter
     ) {
         Button(
-            onClick = { },
+            onClick = { onClick(); onNavigate()},
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -386,10 +314,6 @@ private fun FloatingAddButton() {
     }
 }
 
-enum class Tab(val title: String) {
-    Today("Today"),
-    AllHabits("All Habits")
-}
 
 // Preview
 //@Preview

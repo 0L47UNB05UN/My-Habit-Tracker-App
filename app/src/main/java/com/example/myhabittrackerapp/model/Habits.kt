@@ -13,6 +13,7 @@ data class Habits(
     val habitType: HabitType = HabitType.Start,
     val color: Color = Color.Green,
     val icon: ImageVector = Icons.Outlined.DepartureBoard
+//    val completed: Boolean
 )
 
 enum class HabitType(val displayName: String) {

@@ -16,12 +16,15 @@ import com.example.myhabittrackerapp.model.Habits
 import kotlin.collections.listOf
 
 class HabitScreenSettingsViewModel: ViewModel() {
-    var habitName by mutableStateOf("Morning Meditation")
-    var subtitle by mutableStateOf("meditate for few minutes in the evening")
+    var title by mutableStateOf("")
+    var subtitle by mutableStateOf("")
     var habitType by mutableStateOf(HabitType.Start)
     var dailyReminderEnabled by mutableStateOf(true)
     var reminderTime by mutableStateOf("07:00 PM")
     var frequency by  mutableStateOf("Every Day")
+
+    var originalTitle by mutableStateOf("")
+    var originalSubtitle by mutableStateOf("")
 
     var currentHabit by mutableStateOf(
         Habits(
@@ -31,9 +34,7 @@ class HabitScreenSettingsViewModel: ViewModel() {
                 habitType = HabitType.Start
         )
     )
-
-    val habits = mutableStateOf(
-        listOf(
+    val habits = mutableStateOf(listOf(
             Habits(
                 title = "Drink Water",
                 subtitle = "Daily goal: 8 glasses",
@@ -60,38 +61,62 @@ class HabitScreenSettingsViewModel: ViewModel() {
                 icon = Icons.Outlined.Smartphone,
                 color = Color.Red
             )
-        )
-    )
+        ))
 
-    fun save(){
-        habits.value = if (currentHabit.title == "Untitled" && currentHabit.subtitle == "Untitled") {
-            // New habit - add to list
-            habits.value + currentHabit.copy(
-                title = currentHabit.title, // Use whatever was edited
-                subtitle = currentHabit.subtitle
+    fun resetCurrentHabit(){
+        markCurrentHabit(
+            Habits(
+                title = "Untitled",
+                subtitle = "Untitled",
+                color = Color.Green,
+                habitType = HabitType.Start
             )
+        )
+    }
+    fun markCurrentHabit(habit: Habits){
+        currentHabit = habit
+        title = habit.title
+        subtitle = habit.subtitle
+        habitType = habit.habitType
+        originalTitle = title
+        originalSubtitle = subtitle
+    }
+    fun save(){
+        habits.value = if (originalTitle == "Untitled" && originalSubtitle == "Untitled") {
+            val newHabit = Habits(
+                title = title,
+                subtitle = subtitle,
+                habitType = habitType,
+                color = if (habitType == HabitType.Start) Color.Green else Color.Red,
+                icon = currentHabit.icon
+            )
+            if (!habits.value.contains(newHabit)) habits.value + newHabit else habits.value
         } else {
-            // Existing habit - find and replace
             habits.value.map {
-                if (it.title == currentHabit.title && it.subtitle == currentHabit.subtitle)
-                    currentHabit
+                if (it.title == originalTitle && it.subtitle == originalSubtitle)
+                    it.copy(
+                        title = title,
+                        subtitle = subtitle,
+                        habitType = habitType,
+                        color = if (habitType == HabitType.Start) Color.Green else Color.Red
+                    )
                 else
                     it
             }
         }
-        Log.d("mine", "${habits.value.size} $habits.value")
     }
 
     private fun updateCurrentHabit() {
         currentHabit = currentHabit.copy(
-            title = habitName,
+            title = title,
             subtitle = subtitle,
-            habitType = habitType
+            habitType = habitType,
+            color = if (habitType == HabitType.Start) Color.Green else Color.Red
         )
     }
 
     fun onHabitNameChange(newName: String) {
-        habitName = newName
+        title = newName
         updateCurrentHabit()
     }
 
@@ -104,7 +129,9 @@ class HabitScreenSettingsViewModel: ViewModel() {
         habitType = newType
         updateCurrentHabit()
     }
-    fun delete(){
-        TODO()
+    fun delete() {
+            habits.value = habits.value.filter { habit ->
+                !(habit.title == originalTitle && habit.subtitle == originalSubtitle)
+            }
     }
 }

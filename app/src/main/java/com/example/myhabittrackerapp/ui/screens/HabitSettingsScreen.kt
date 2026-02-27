@@ -55,7 +55,6 @@ fun HabitSettingsScreen(
     appViewModel: HabitScreenSettingsViewModel,
     onBackClick: () -> Unit = {}
 ) {
-    Log.d("mine", "settings ${appViewModel.currentHabit}")
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -86,17 +85,19 @@ fun HabitSettingsScreen(
                 item {
                     HabitNameSection(
                         habitName = appViewModel.currentHabit.title,
-                        onNameChange = { appViewModel.onHabitNameChange(it)  }
+                        onNameChange = { appViewModel.onHabitNameChange(it)  },
+                        flag = true
                     )
                     HabitNameSection(
                         habitName = appViewModel.currentHabit.subtitle,
-                        onNameChange = { appViewModel.onSubtitleChange(it) }
+                        onNameChange = { appViewModel.onSubtitleChange(it) },
+                        flag = false
                     )
                 }
                 // Habit Type Section
                 item {
                     HabitTypeSection(
-                        selectedType = appViewModel.habitType,
+                        selectedType = appViewModel.currentHabit.habitType,
                         onTypeChange = { appViewModel.onHabitTypeChange(it)  }
                     )
                 }
@@ -114,7 +115,7 @@ fun HabitSettingsScreen(
                 // Danger Zone
                 item {
                     DangerZone(
-                        onDeleteClick = { appViewModel.delete() }
+                        onDeleteClick = { appViewModel.delete(); onBackClick() }
                     )
                 }
             }
@@ -184,13 +185,14 @@ private fun HabitSettingsHeader(
 @Composable
 private fun HabitNameSection(
     habitName: String,
-    onNameChange: (String) -> Unit
+    onNameChange: (String) -> Unit,
+    flag: Boolean
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(spacing.small)
     ) {
         Text(
-            text = "HABIT NAME",
+            text = if (flag) "HABIT NAME" else "HABIT DESCRIPTION",
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),

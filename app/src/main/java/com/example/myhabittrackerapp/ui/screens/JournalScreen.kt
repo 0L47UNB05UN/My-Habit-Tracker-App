@@ -1,7 +1,5 @@
 package com.example.myhabittrackerapp.ui.screens
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,9 +26,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.SentimentNeutral
-import androidx.compose.material.icons.filled.SentimentSatisfied
-import androidx.compose.material.icons.filled.SentimentVerySatisfied
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.History
@@ -45,51 +40,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myhabittrackerapp.model.JournalEntry
+import com.example.myhabittrackerapp.model.Mood
 import com.example.myhabittrackerapp.ui.theme.MyHabitTrackerAppTheme
 import com.example.myhabittrackerapp.ui.theme.spacing
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun JournalScreen() {
-    var currentEntry by remember { mutableStateOf("") }
-    var selectedMood by remember { mutableStateOf<Mood?>(null) }
-    val journalEntries = remember { mutableStateListOf<JournalEntry>() }
-    val today = LocalDate.now()
-    LaunchedEffect(Unit) {
-        journalEntries.addAll(
-            listOf(
-                JournalEntry(
-                    date = today.minusDays(1),
-                    content = "Took a long walk in the park today. The autumn leaves are finally starting to turn. Spent the evening reading by the window. Feeling much more rested than yesterday.",
-                    mood = Mood.Satisfied,
-                    lastEdited = "14h ago"
-                ),
-                JournalEntry(
-                    date = today.minusDays(2),
-                    content = "Celebrated Sarah's birthday! We went to that new Italian place downtown. The pasta was incredible, but the company was even better. Truly a day to remember.",
-                    mood = Mood.VerySatisfied
-                )
-            )
-        )
-    }
+fun JournalScreen(
+    appViewModel: JournalScreenViewModel = viewModel()
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -114,29 +86,20 @@ fun JournalScreen() {
                 // Today's Card (Active)
                 item {
                     TodayJournalCard(
-                        currentEntry = currentEntry,
-                        onEntryChange = { currentEntry = it },
-                        selectedMood = selectedMood,
-                        onMoodSelected = { selectedMood = it },
+                        currentEntry = appViewModel.currentEntry,
+                        onEntryChange = { appViewModel.currentEntry = it },
+                        selectedMood = appViewModel.selectedMood,
+                        onMoodSelected = { appViewModel.selectedMood = it },
                         onSave = {
-                            if (currentEntry.isNotBlank() && selectedMood != null) {
-                                journalEntries.add(
-                                    0,
-                                    JournalEntry(
-                                        date = today.minusDays(1),
-                                        content = currentEntry,
-                                        mood = selectedMood!!
-                                    )
-                                )
-                                currentEntry = ""
-                                selectedMood = null
+                            if (appViewModel.currentEntry.isNotBlank() && appViewModel.selectedMood != null) {
+                                appViewModel.save()
                             }
                         }
                     )
                 }
 
                 // Past Journal Entries
-                items(journalEntries) { entry ->
+                items(appViewModel.journalEntries) { entry ->
                     PastJournalCard(entry = entry)
                 }
 
@@ -146,22 +109,21 @@ fun JournalScreen() {
                 }
             }
         }
-        // Floating Action Button
-        FloatingActionButton(
-            onClick = { /* Handle add new entry */ },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = spacing.large, bottom = 100.dp),
-            containerColor = MaterialTheme.colorScheme.primary,
-            shape = CircleShape
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Add Entry",
-                tint = Color.White,
-                modifier = Modifier.size(28.dp)
-            )
-        }
+//        FloatingActionButton(
+//            onClick = { /* Handle add new entry */ },
+//            modifier = Modifier
+//                .align(Alignment.BottomEnd)
+//                .padding(end = spacing.large, bottom = 100.dp),
+//            containerColor = MaterialTheme.colorScheme.primary,
+//            shape = CircleShape
+//        ) {
+//            Icon(
+//                imageVector = Icons.Default.Add,
+//                contentDescription = "Add Entry",
+//                tint = Color.White,
+//                modifier = Modifier.size(28.dp)
+//            )
+//        }
     }
 }
 
@@ -401,12 +363,9 @@ private fun PastJournalCard(
     entry: JournalEntry
 ) {
     val isToday = entry.date == LocalDate.now()
-    val opacity = if (isToday) 1f else 0.9f
-
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .then(if (!isToday) Modifier else Modifier),
+            .fillMaxWidth(),
         shape = RoundedCornerShape(spacing.medium),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (isToday) 1f else 0.5f)
@@ -513,27 +472,8 @@ private fun EmptyStateCard() {
     }
 }
 
-// Data Models
-enum class Mood(val icon: ImageVector) {
-    VerySatisfied(Icons.Filled.SentimentVerySatisfied),
-    Satisfied(Icons.Filled.SentimentSatisfied),
-    Neutral(Icons.Filled.SentimentNeutral)
-}
 
-data class JournalEntry(
-    val date: LocalDate,
-    val content: String,
-    val mood: Mood,
-    val lastEdited: String? = null
-)
-
-// Preview
-@Preview(
-    name = "Journal Screen",
-    showBackground = true,
-    showSystemUi = true,
-    device = "id:pixel_6"
-)
+@Preview
 @Composable
 fun JournalScreenPreview() {
     MyHabitTrackerAppTheme {
