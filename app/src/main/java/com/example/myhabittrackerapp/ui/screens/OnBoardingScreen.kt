@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -72,7 +73,7 @@ fun OnboardingScreen(
 ) {
     var userName by remember { mutableStateOf("") }
     var habitInput by remember { mutableStateOf("") }
-    val habits = remember { mutableStateOf(listOf("Read for 10 mins", "No coffee after 2pm")) }
+    val habits = remember { mutableStateOf(listOf("Read for 10 mins", "No coffee after 2pm", "Reading", "Sweeping", "Cleaning", "Drinking while driving" )) }
     Surface(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -354,12 +355,16 @@ fun HabitBuilderSection(
 
         // Habit tags
         if (habits.isNotEmpty()) {
-            Row(
+            // FlowRow automatically wraps items to the next line
+            FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight(),
+                    .padding(vertical = 8.dp),
+                // Spacing between items horizontally
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.Top
+                // Spacing between rows vertically
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                maxItemsInEachRow = Int.MAX_VALUE // Default behavior
             ) {
                 habits.forEach { habit ->
                     HabitChip(
