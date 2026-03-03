@@ -73,7 +73,7 @@ fun OnboardingScreen(
 ) {
     var userName by remember { mutableStateOf("") }
     var habitInput by remember { mutableStateOf("") }
-    val habits = remember { mutableStateOf(listOf("Read for 10 mins", "No coffee after 2pm", "Reading", "Sweeping", "Cleaning", "Drinking while driving" )) }
+    val habits = remember { mutableStateOf(listOf("Read for 10 mins", "No coffee after 2pm", "Reading", "Sweeping", "Cleaning", "Stop drinking while driving" )) }
     Surface(
         modifier = Modifier.fillMaxSize(),
     ) {
