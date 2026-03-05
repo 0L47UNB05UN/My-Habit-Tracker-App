@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -34,9 +35,11 @@ import com.example.myhabittrackerapp.ui.screens.DiscoverScreen
 import com.example.myhabittrackerapp.ui.screens.HabitScreenSettingsViewModel
 import com.example.myhabittrackerapp.ui.screens.HabitSettingsScreen
 import com.example.myhabittrackerapp.ui.screens.JournalScreen
+import com.example.myhabittrackerapp.ui.screens.JournalScreenViewModel
 import com.example.myhabittrackerapp.ui.screens.MyHabitsScreen
 import com.example.myhabittrackerapp.ui.screens.OnboardingScreen
 import com.example.myhabittrackerapp.ui.screens.SettingsScreen
+import com.example.myhabittrackerapp.ui.screens.SettingsViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,6 +51,8 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val habitScreenViewModel: HabitScreenSettingsViewModel = viewModel()
+    val journalScreenViewModel: JournalScreenViewModel = hiltViewModel()
+    val settingsScreenViewModel: SettingsViewModel = hiltViewModel()
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
@@ -144,10 +149,10 @@ fun MainScreen(
                 )
             }
             composable("journal"){
-                JournalScreen()
+                JournalScreen(journalScreenViewModel)
             }
             composable("settings"){
-                SettingsScreen()
+                SettingsScreen(settingsScreenViewModel)
             }
             composable("habit"){
                 MyHabitsScreen(

@@ -37,6 +37,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
@@ -46,29 +47,56 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.myhabittrackerapp.ui.theme.MyHabitTrackerAppTheme
+import com.example.myhabittrackerapp.model.UserSettings
 import com.example.myhabittrackerapp.ui.theme.spacing
 
 @Composable
-fun SettingsScreen() {
-    var isDarkMode by remember { mutableStateOf(false) }
-    var userName by remember { mutableStateOf("Elena Thorne") }
-    var dailyNudgeEnabled by remember { mutableStateOf(true) }
-    var monthlyRecapEnabled by remember { mutableStateOf(false) }
-    var reminderTime by remember { mutableStateOf("21:30") }
+fun SettingsScreen(
+    viewModel: SettingsViewModel
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+    } else {
+        SettingsContent(
+            settings = uiState,
+            onUserNameChange = viewModel::updateUserName,
+            onThemeChange = viewModel::updateTheme,
+            onDailyNudgeChange = viewModel::updateDailyNudge,
+            onMonthlyRecapChange = viewModel::updateMonthlyRecap,
+            onReminderTimeClick = { /* Show time picker dialog */ },
+            onExportClick = viewModel::exportData,
+            onClearDataClick = viewModel::clearAllData
+        )
+    }
+}
+
+@Composable
+fun SettingsContent(
+    settings: UserSettings,
+    onUserNameChange: (String) -> Unit,
+    onThemeChange: (Boolean) -> Unit,
+    onDailyNudgeChange: (Boolean) -> Unit,
+    onMonthlyRecapChange: (Boolean) -> Unit,
+    onReminderTimeClick: () -> Unit,
+    onExportClick: () -> Unit,
+    onClearDataClick: () -> Unit
+) {
+    // Your existing UI code, but use settings parameter instead of local state
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -92,28 +120,31 @@ fun SettingsScreen() {
             ) {
                 item {
                     ProfileCard(
-                        userName = userName,
-                        onNameChange = { userName = it }
+                        userName = settings.userName,
+                        onNameChange = onUserNameChange
                     )
                 }
                 item {
                     AppearanceSection(
-                        isDarkMode = isDarkMode,
-                        onThemeChange = { isDarkMode = it }
+                        isDarkMode = settings.isDarkMode,
+                        onThemeChange = onThemeChange
                     )
                 }
                 item {
                     NotificationsSection(
-                        dailyNudgeEnabled = dailyNudgeEnabled,
-                        onDailyNudgeChange = { dailyNudgeEnabled = it },
-                        monthlyRecapEnabled = monthlyRecapEnabled,
-                        onMonthlyRecapChange = { monthlyRecapEnabled = it },
-                        reminderTime = reminderTime,
-                        onReminderTimeClick = { /* Show time picker */ }
+                        dailyNudgeEnabled = settings.dailyNudgeEnabled,
+                        onDailyNudgeChange = onDailyNudgeChange,
+                        monthlyRecapEnabled = settings.monthlyRecapEnabled,
+                        onMonthlyRecapChange = onMonthlyRecapChange,
+                        reminderTime = settings.reminderTime,
+                        onReminderTimeClick = onReminderTimeClick
                     )
                 }
                 item {
-                    DataPrivacySection()
+                    DataPrivacySection(
+                        onExportClick = onExportClick,
+                        onClearDataClick = onClearDataClick
+                    )
                 }
                 item {
                     SettingsFooter()
@@ -568,7 +599,10 @@ private fun NotificationRow(
 }
 
 @Composable
-private fun DataPrivacySection() {
+private fun DataPrivacySection(
+    onExportClick: () -> Unit,
+    onClearDataClick: () -> Unit
+) {
     Column(
         verticalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
@@ -620,10 +654,8 @@ private fun DataPrivacySection() {
                         )
                     }
                 }
-
-                // Export button
                 Button(
-                    onClick = { },
+                    onClick = onExportClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -644,12 +676,10 @@ private fun DataPrivacySection() {
                         fontWeight = FontWeight.Bold
                     )
                 }
-
-                // Clear data button
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { },
+                        .clickable {onClearDataClick()},
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -714,10 +744,10 @@ private fun SettingsFooter() {
 }
 
 // Preview
-@Preview
-@Composable
-fun SettingsScreenPreview() {
-    MyHabitTrackerAppTheme {
-        SettingsScreen()
-    }
-}
+//@Preview
+//@Composable
+//fun SettingsScreenPreview() {
+//    MyHabitTrackerAppTheme {
+//        SettingsScreen()
+//    }
+//}

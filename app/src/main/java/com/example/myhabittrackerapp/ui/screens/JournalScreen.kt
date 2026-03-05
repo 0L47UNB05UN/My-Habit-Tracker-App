@@ -25,7 +25,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.History
@@ -33,13 +32,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,35 +48,48 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myhabittrackerapp.model.JournalEntry
+import com.example.myhabittrackerapp.model.JournalEntryEntity
 import com.example.myhabittrackerapp.model.Mood
-import com.example.myhabittrackerapp.ui.theme.MyHabitTrackerAppTheme
 import com.example.myhabittrackerapp.ui.theme.spacing
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun JournalScreen(
-    appViewModel: JournalScreenViewModel = viewModel()
+    appViewModel: JournalScreenViewModel
+) {
+    val journalEntries by appViewModel.journalEntries.collectAsState()
+    val isLoading by appViewModel.isLoading.collectAsState()
+
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+    } else {
+        JournalContent(
+            viewModel = appViewModel,
+            journalEntries = journalEntries
+        )
+    }
+}
+
+@Composable
+fun JournalContent(
+    viewModel: JournalScreenViewModel,
+    journalEntries: List<JournalEntryEntity>
 ) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
         ) {
-            // Header
             JournalHeader()
-            // Main Content
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -83,47 +97,30 @@ fun JournalScreen(
                 contentPadding = PaddingValues(horizontal = spacing.large, vertical = spacing.large),
                 verticalArrangement = Arrangement.spacedBy(spacing.large)
             ) {
-                // Today's Card (Active)
+                // Today's Card
                 item {
                     TodayJournalCard(
-                        currentEntry = appViewModel.currentEntry,
-                        onEntryChange = { appViewModel.currentEntry = it },
-                        selectedMood = appViewModel.selectedMood,
-                        onMoodSelected = { appViewModel.selectedMood = it },
-                        onSave = {
-                            if (appViewModel.currentEntry.isNotBlank() && appViewModel.selectedMood != null) {
-                                appViewModel.save()
-                            }
-                        }
+                        currentEntry = viewModel.currentEntry,
+                        onEntryChange = { viewModel.currentEntry = it },
+                        selectedMood = viewModel.selectedMood,
+                        onMoodSelected = { viewModel.selectedMood = it },
+                        onSave = { viewModel.save() },
+                        viewModel = viewModel
                     )
                 }
 
-                // Past Journal Entries
-                items(appViewModel.journalEntries) { entry ->
-                    PastJournalCard(entry = entry)
+                // Past Entries
+                items(journalEntries) { entry ->
+                    PastJournalCard(
+                        entry = entry,
+                        viewModel = viewModel
+                    )
                 }
-
-                // Empty State Card
                 item {
                     EmptyStateCard()
                 }
             }
         }
-//        FloatingActionButton(
-//            onClick = { /* Handle add new entry */ },
-//            modifier = Modifier
-//                .align(Alignment.BottomEnd)
-//                .padding(end = spacing.large, bottom = 100.dp),
-//            containerColor = MaterialTheme.colorScheme.primary,
-//            shape = CircleShape
-//        ) {
-//            Icon(
-//                imageVector = Icons.Default.Add,
-//                contentDescription = "Add Entry",
-//                tint = Color.White,
-//                modifier = Modifier.size(28.dp)
-//            )
-//        }
     }
 }
 
@@ -187,7 +184,8 @@ private fun TodayJournalCard(
     onEntryChange: (String) -> Unit,
     selectedMood: Mood?,
     onMoodSelected: (Mood) -> Unit,
-    onSave: () -> Unit
+    onSave: () -> Unit,
+    viewModel: JournalScreenViewModel
 ) {
     Card(
         modifier = Modifier
@@ -223,7 +221,7 @@ private fun TodayJournalCard(
                     )
 
                     Text(
-                        text = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMM d")),
+                        text = viewModel.formatDateForDisplay(viewModel.today), // Use formatter
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
@@ -244,9 +242,7 @@ private fun TodayJournalCard(
                     )
                 }
             }
-
             Spacer(modifier = Modifier.height(spacing.medium))
-
             // Text Input
             BasicTextField(
                 value = currentEntry,
@@ -360,9 +356,10 @@ private fun MoodButton(
 
 @Composable
 private fun PastJournalCard(
-    entry: JournalEntry
+    entry: JournalEntryEntity,
+    viewModel: JournalScreenViewModel
 ) {
-    val isToday = entry.date == LocalDate.now()
+    val isToday = entry.date == viewModel.today // Compare Date objects
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -382,7 +379,7 @@ private fun PastJournalCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = entry.date.format(DateTimeFormatter.ofPattern("EEEE, MMM d")),
+                    text = viewModel.formatDateForDisplay(entry.date), // Use formatter
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = if (isToday) 1f else 0.7f)
@@ -473,10 +470,10 @@ private fun EmptyStateCard() {
 }
 
 
-@Preview
-@Composable
-fun JournalScreenPreview() {
-    MyHabitTrackerAppTheme {
-        JournalScreen()
-    }
-}
+//@Preview
+//@Composable
+//fun JournalScreenPreview() {
+//    MyHabitTrackerAppTheme {
+//        JournalScreen()
+//    }
+//}
