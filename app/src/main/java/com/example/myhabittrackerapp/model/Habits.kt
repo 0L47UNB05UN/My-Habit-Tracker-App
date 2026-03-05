@@ -1,19 +1,16 @@
 package com.example.myhabittrackerapp.model
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.DepartureBoard
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.Color
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
-
-
+@Entity(tableName = "habits")
 data class Habits(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,
     val subtitle: String,
     val habitType: HabitType = HabitType.Start,
-    val color: Color = Color.Green,
-    val icon: ImageVector = Icons.Outlined.DepartureBoard
-//    val completed: Boolean
+    val colorArgb: Int,
+    val iconName: String
 )
 
 enum class HabitType(val displayName: String) {

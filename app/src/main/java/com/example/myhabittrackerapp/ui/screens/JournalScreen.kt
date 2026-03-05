@@ -18,306 +18,284 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.CalendarToday
-import androidx.compose.material.icons.outlined.EditNote
-import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Circle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myhabittrackerapp.model.JournalEntry
-import com.example.myhabittrackerapp.model.Mood
-import com.example.myhabittrackerapp.ui.theme.MyHabitTrackerAppTheme
 import com.example.myhabittrackerapp.ui.theme.spacing
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 
 @Composable
 fun JournalScreen(
-    appViewModel: JournalScreenViewModel = viewModel()
+    appViewModel: JournalScreenViewModel,
+    onSettingsClick: () -> Unit = {}
 ) {
+    val journalEntries by appViewModel.journalEntries.collectAsState()
+    val habitName by appViewModel.currentHabitName.collectAsState()
+    val isEditing = appViewModel.editingEntryId != null
+    val hasEntryForToday = journalEntries.any { it.date == appViewModel.today }
+    
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    // Scroll to top when editing starts
+    LaunchedEffect(isEditing) {
+        if (isEditing) {
+            listState.animateScrollToItem(0)
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(Color(0xFFFCFAF7))
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
         ) {
-            // Header
-            JournalHeader()
-            // Main Content
+            JournalHeader(habitName, appViewModel.today, onSettingsClick)
+            
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(bottom = 88.dp),
-                contentPadding = PaddingValues(horizontal = spacing.large, vertical = spacing.large),
+                contentPadding = PaddingValues(horizontal = spacing.large, vertical = spacing.medium),
                 verticalArrangement = Arrangement.spacedBy(spacing.large)
             ) {
-                // Today's Card (Active)
-                item {
-                    TodayJournalCard(
-                        currentEntry = appViewModel.currentEntry,
-                        onEntryChange = { appViewModel.currentEntry = it },
-                        selectedMood = appViewModel.selectedMood,
-                        onMoodSelected = { appViewModel.selectedMood = it },
-                        onSave = {
-                            if (appViewModel.currentEntry.isNotBlank() && appViewModel.selectedMood != null) {
-                                appViewModel.save()
-                            }
+                // Show input card if no entry for today OR if we are currently editing an entry
+                if (!hasEntryForToday || isEditing) {
+                    item(key = "add_journal_card") {
+                        AddJournalCard(
+                            currentEntry = appViewModel.currentEntry,
+                            onEntryChange = { appViewModel.currentEntry = it },
+                            isCompleted = appViewModel.isCompleted,
+                            onToggleCompletion = { appViewModel.isCompleted = it },
+                            onSave = { appViewModel.save() },
+                            date = appViewModel.editingDate ?: appViewModel.today,
+                            isEditing = isEditing,
+                            onCancel = { appViewModel.cancelEditing() }
+                        )
+                    }
+                }
+
+                items(journalEntries, key = { it.id }) { entry ->
+                    JournalEntryCard(
+                        entry = entry,
+                        onEditClick = {
+                            appViewModel.startEditing(entry)
                         }
                     )
                 }
 
-                // Past Journal Entries
-                items(appViewModel.journalEntries) { entry ->
-                    PastJournalCard(entry = entry)
-                }
-
-                // Empty State Card
-                item {
-                    EmptyStateCard()
+                if (journalEntries.isEmpty() && !isEditing) {
+                    item(key = "empty_state") {
+                        EmptyStateCard()
+                    }
                 }
             }
         }
-//        FloatingActionButton(
-//            onClick = { /* Handle add new entry */ },
-//            modifier = Modifier
-//                .align(Alignment.BottomEnd)
-//                .padding(end = spacing.large, bottom = 100.dp),
-//            containerColor = MaterialTheme.colorScheme.primary,
-//            shape = CircleShape
-//        ) {
-//            Icon(
-//                imageVector = Icons.Default.Add,
-//                contentDescription = "Add Entry",
-//                tint = Color.White,
-//                modifier = Modifier.size(28.dp)
-//            )
-//        }
     }
 }
 
 @Composable
-private fun JournalHeader() {
-    Surface(
+private fun JournalHeader(
+    habitName: String, 
+    date: LocalDate,
+    onSettingsClick: () -> Unit
+) {
+    Column(
         modifier = Modifier
-            .fillMaxWidth(),
-        color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f),
-        tonalElevation = 0.dp
+            .fillMaxWidth()
+            .padding(horizontal = spacing.large, vertical = spacing.medium)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = spacing.large, vertical = spacing.medium)
+        Text(
+            text = "${date.month.name} ${date.year}",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Gray,
+            letterSpacing = 1.sp
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                Text(
-                    text = "Daily Journal",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(spacing.medium))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                        .clickable { },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.CalendarToday,
-                        contentDescription = "Calendar",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
+            Text(
+                text = habitName,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            Row {
+                IconButton(onClick = { }) {
+                    Icon(Icons.Default.Search, contentDescription = "Search")
+                }
+                IconButton(onClick = onSettingsClick) {
+                    Icon(Icons.Default.Settings, contentDescription = "Settings")
                 }
             }
-
-            Text(
-                text = "Data saved locally",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
         }
     }
 }
 
 @Composable
-private fun TodayJournalCard(
+private fun AddJournalCard(
     currentEntry: String,
     onEntryChange: (String) -> Unit,
-    selectedMood: Mood?,
-    onMoodSelected: (Mood) -> Unit,
-    onSave: () -> Unit
+    isCompleted: Boolean,
+    onToggleCompletion: (Boolean) -> Unit,
+    onSave: () -> Unit,
+    date: LocalDate,
+    isEditing: Boolean = false,
+    onCancel: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .border(
-                width = 2.dp,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(spacing.medium)
+                BorderStroke(
+                    width = if (isEditing) 2.dp else 1.dp, 
+                    color = if (isEditing) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else Color.LightGray.copy(alpha = 0.5f)
+                ), 
+                RoundedCornerShape(24.dp)
             ),
-        shape = RoundedCornerShape(spacing.medium),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isEditing) 4.dp else 2.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(spacing.large)
+        Row(
+            modifier = Modifier.padding(spacing.large)
         ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "TODAY",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        letterSpacing = 0.5.sp
-                    )
-
-                    Text(
-                        text = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMM d")),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = date.dayOfMonth.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(text = if (isEditing) date.dayOfWeek.name.take(3) else "TODAY", fontSize = 12.sp, color = Color.Gray)
+                Spacer(modifier = Modifier.height(spacing.medium))
+                
+                IconButton(
+                    onClick = { onToggleCompletion(true) },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isCompleted) Icons.Filled.CheckCircle else Icons.Outlined.CheckCircle,
+                        contentDescription = "Succeeded",
+                        tint = if (isCompleted) Color(0xFF4CAF50) else Color.LightGray
                     )
                 }
-
-                Surface(
-                    shape = RoundedCornerShape(spacing.small),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                IconButton(
+                    onClick = { onToggleCompletion(false) },
+                    modifier = Modifier.size(32.dp)
                 ) {
-                    Text(
-                        text = "DRAFT",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(horizontal = spacing.medium, vertical = 4.dp)
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = "Failed",
+                        tint = if (!isCompleted) Color.Red else Color.LightGray
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(spacing.medium))
+            Spacer(modifier = Modifier.width(spacing.large))
 
-            // Text Input
-            BasicTextField(
-                value = currentEntry,
-                onValueChange = onEntryChange,
-                textStyle = LocalTextStyle.current.copy(
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 16.sp,
-                    lineHeight = 24.sp
-                ),
-                decorationBox = { innerTextField ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 160.dp)
-                    ) {
-                        if (currentEntry.isEmpty()) {
-                            Text(
-                                text = "How was your day? Write something...",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 16.sp,
-                                lineHeight = 24.sp
-                            )
-                        }
-                        innerTextField()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(spacing.medium))
-
-            // Footer
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = spacing.medium)
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(0.dp)
-                    ),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Mood Selector
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(spacing.medium)
-                ) {
-                    Mood.entries.forEach { mood ->
-                        MoodButton(
-                            mood = mood,
-                            isSelected = selectedMood == mood,
-                            onClick = { onMoodSelected(mood) }
-                        )
-                    }
-                }
-                // Save Button
-                Button(
-                    onClick = onSave,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
-                    shape = RoundedCornerShape(spacing.small),
-                    modifier = Modifier.height(40.dp)
-                ) {
+            Column(modifier = Modifier.weight(1f)) {
+                if (isEditing) {
                     Text(
-                        text = "Save",
-                        fontSize = 14.sp,
+                        text = "EDITING REFLECTION",
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(bottom = 4.dp)
                     )
+                }
+                BasicTextField(
+                    value = currentEntry,
+                    onValueChange = onEntryChange,
+                    textStyle = LocalTextStyle.current.copy(
+                        color = Color.Black,
+                        fontSize = 16.sp
+                    ),
+                    decorationBox = { innerTextField ->
+                        Box(modifier = Modifier.heightIn(min = 100.dp)) {
+                            if (currentEntry.isEmpty()) {
+                                Text(
+                                    "How did today go? Tap to write your summary...",
+                                    color = Color.LightGray,
+                                    fontSize = 16.sp
+                                )
+                            }
+                            innerTextField()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(spacing.medium))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(spacing.medium),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(
+                        onClick = onSave,
+                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A6572))
+                    ) {
+                        Icon(
+                            imageVector = if (isEditing) Icons.Default.Edit else Icons.Default.Add, 
+                            contentDescription = null, 
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(if (isEditing) "Update Entry" else "Add Entry")
+                    }
+                    
+                    if (isEditing) {
+                        OutlinedButton(
+                            onClick = onCancel,
+                            shape = RoundedCornerShape(20.dp)
+                        ) {
+                            Text("Cancel")
+                        }
+                    }
                 }
             }
         }
@@ -325,109 +303,74 @@ private fun TodayJournalCard(
 }
 
 @Composable
-private fun MoodButton(
-    mood: Mood,
-    isSelected: Boolean,
-    onClick: () -> Unit
+private fun JournalEntryCard(
+    entry: JournalEntry,
+    onEditClick: () -> Unit
 ) {
-    val backgroundColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
-    }
-    val iconColor = if (isSelected) {
-        Color.White
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .background(backgroundColor)
-            .clickable { onClick() }
-            .scale(if (isSelected) 1f else 1f),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = mood.icon,
-            contentDescription = mood.name,
-            tint = iconColor,
-            modifier = Modifier.size(20.dp)
-        )
-    }
-}
-
-@Composable
-private fun PastJournalCard(
-    entry: JournalEntry
-) {
-    val isToday = entry.date == LocalDate.now()
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(spacing.medium),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = if (isToday) 1f else 0.5f)
-        )
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(spacing.large)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = entry.date.format(DateTimeFormatter.ofPattern("EEEE, MMM d")),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = if (isToday) 1f else 0.7f)
-                )
-
+        Row(modifier = Modifier.padding(spacing.large)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = entry.date.dayOfMonth.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(text = entry.date.dayOfWeek.name.take(3), fontSize = 12.sp, color = Color.Gray)
+                Spacer(modifier = Modifier.height(spacing.medium))
+                
                 Icon(
-                    imageVector = entry.mood.icon,
-                    contentDescription = "Mood",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                    imageVector = if (entry.isCompleted) Icons.Filled.CheckCircle else Icons.Filled.Circle,
+                    contentDescription = null,
+                    tint = if (entry.isCompleted) Color(0xFF4CAF50) else Color.LightGray,
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(spacing.medium))
+            Spacer(modifier = Modifier.width(spacing.large))
 
-            Text(
-                text = entry.content,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = if (isToday) 1f else 0.6f),
-                fontStyle = FontStyle.Italic,
-                maxLines = if (isToday) Int.MAX_VALUE else 3
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (entry.isCompleted) Color(0xFFFFF9E6) else Color(0xFFFFEBEE)
+                    ) {
+                        Text(
+                            text = if (entry.isCompleted) "⭐ PERFECT DAY" else "PARTIAL",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (entry.isCompleted) Color(0xFFD4AF37) else Color.Red,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                    Text(text = "9:30 PM", fontSize = 10.sp, color = Color.Gray)
+                }
 
-            if (entry.lastEdited != null) {
                 Spacer(modifier = Modifier.height(spacing.small))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.History,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(12.dp)
-                    )
+                Text(
+                    text = entry.content,
+                    fontSize = 15.sp,
+                    color = Color.DarkGray,
+                    lineHeight = 22.sp
+                )
 
-                    Text(
-                        text = "Edited ${entry.lastEdited}",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        letterSpacing = 0.5.sp
-                    )
+                Spacer(modifier = Modifier.height(spacing.medium))
+
+                Button(
+                    onClick = {
+                        onEditClick()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F5F5), contentColor = Color.Gray),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text("Edit Reflection", fontSize = 12.sp)
                 }
             }
         }
@@ -436,47 +379,10 @@ private fun PastJournalCard(
 
 @Composable
 private fun EmptyStateCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(spacing.medium),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        ),
-        border = BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-        )
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(spacing.xLarge),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.EditNote,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                modifier = Modifier.size(48.dp)
-            )
-
-            Spacer(modifier = Modifier.height(spacing.small))
-
-            Text(
-                text = "Scroll to see more history",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-
-@Preview
-@Composable
-fun JournalScreenPreview() {
-    MyHabitTrackerAppTheme {
-        JournalScreen()
+        Text("No journal history for this habit.", color = Color.Gray)
     }
 }

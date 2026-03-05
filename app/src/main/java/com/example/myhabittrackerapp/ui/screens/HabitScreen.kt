@@ -1,6 +1,7 @@
 package com.example.myhabittrackerapp.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,13 +20,16 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.AddCircle
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DoNotDisturbOn
+import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,6 +38,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,14 +50,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myhabittrackerapp.model.HabitType
+import com.example.myhabittrackerapp.model.Habits
 import com.example.myhabittrackerapp.ui.theme.spacing
 
 
 @Composable
 fun MyHabitsScreen(
     appViewModel: HabitScreenSettingsViewModel,
-    onNavigate: () -> Unit = {}
+    onNavigate: () -> Unit = {},
+    onAddHabitClick: () -> Unit = {},
+    onCheckClick: (Long) -> Unit = {}
 ) {
+    val habits by appViewModel.habits.collectAsState()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -83,24 +94,20 @@ fun MyHabitsScreen(
                         iconColor = MaterialTheme.colorScheme.primary
                     )
                 }
-                item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(spacing.large)
-                    ) {
-                        appViewModel.habits.value.filter { habit -> habit.habitType == HabitType.Start }.forEach { habits ->
-                            HabitCard(
-                                title = habits.title,
-                                subtitle = habits.subtitle,
-                                color = habits.color,
-                                habitType = habits.habitType,
-                                icon = habits.icon,
-                                onNavigate = {
-                                    appViewModel.markCurrentHabit(habits)
-                                    onNavigate()
-                                }
-                            )
-                        }
-                    }
+                
+                items(habits.filter { it.habitType == HabitType.Start }) { habit ->
+                    HabitCard(
+                        title = habit.title,
+                        subtitle = habit.subtitle,
+                        color = Color(habit.colorArgb),
+                        habitType = habit.habitType,
+                        icon = Icons.Outlined.WaterDrop, // Temporary fix for ImageVector
+                        onNavigate = {
+                            appViewModel.markCurrentHabit(habit)
+                            onNavigate()
+                        },
+                        onCheckClick = { onCheckClick(habit.id) }
+                    )
                 }
 
                 item {
@@ -110,25 +117,24 @@ fun MyHabitsScreen(
                         iconColor = MaterialTheme.colorScheme.error
                     )
                 }
-                item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(spacing.large)
-                    ) {
-                        appViewModel.habits.value.filter { habit -> habit.habitType == HabitType.Stop }.forEach { habits ->
-                            HabitCard(
-                                title = habits.title,
-                                subtitle = habits.subtitle,
-                                color = habits.color,
-                                habitType = habits.habitType,
-                                icon = habits.icon,
-                                onNavigate = { appViewModel.markCurrentHabit(habits); onNavigate() }
-                            )
-                        }
-                    }
+
+                items(habits.filter { it.habitType == HabitType.Stop }) { habit ->
+                    HabitCard(
+                        title = habit.title,
+                        subtitle = habit.subtitle,
+                        color = Color(habit.colorArgb),
+                        habitType = habit.habitType,
+                        icon = Icons.Outlined.DoNotDisturbOn, // Temporary fix
+                        onNavigate = {
+                            appViewModel.markCurrentHabit(habit)
+                            onNavigate()
+                        },
+                        onCheckClick = { onCheckClick(habit.id) }
+                    )
                 }
             }
         }
-        FloatingAddButton({appViewModel.resetCurrentHabit()}, onNavigate)
+        FloatingAddButton({appViewModel.resetCurrentHabit()}, onAddHabitClick)
     }
 }
 
@@ -156,7 +162,7 @@ private fun MyHabitsHeader() {
                 modifier = Modifier.padding(top = spacing.small)
             )
             Text(
-                text = "3 habits remaining for today",
+                text = "Track your progress today",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary,
@@ -199,7 +205,8 @@ fun HabitCard(
     subtitle: String,
     color: Color,
     habitType: HabitType,
-    onNavigate: () -> Unit
+    onNavigate: () -> Unit,
+    onCheckClick: () -> Unit
 ){
     Card(
         onClick = onNavigate,
@@ -248,7 +255,7 @@ fun HabitCard(
                     )
                 }
                 // Text content
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
                         fontSize = 16.sp,
@@ -263,17 +270,22 @@ fun HabitCard(
                         textAlign = TextAlign.Left
                     )
                 }
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
-                ){Icon(
-                    imageVector = if (habitType == HabitType.Start) Icons.Filled.CheckCircle else Icons.Filled.Block,
-                    contentDescription = null,
+                
+                // Check Action
+                Box(
                     modifier = Modifier
                         .padding(end = spacing.large)
-                        .requiredSize(spacing.xLarge),
-                    tint = color
-                )}
+                        .size(48.dp)
+                        .clickable { onCheckClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (habitType == HabitType.Start) Icons.Filled.CheckCircle else Icons.Filled.Block,
+                        contentDescription = "Check Habit",
+                        modifier = Modifier.size(32.dp),
+                        tint = color
+                    )
+                }
             }
         }
     }
@@ -313,15 +325,3 @@ private fun FloatingAddButton(
         }
     }
 }
-
-
-// Preview
-//@Preview
-//@Composable
-//fun MyHabitsScreenPreview() {
-//    MyHabitTrackerAppTheme(
-//        darkTheme = true
-//    ) {
-//        MyHabitsScreen()
-//    }
-//}

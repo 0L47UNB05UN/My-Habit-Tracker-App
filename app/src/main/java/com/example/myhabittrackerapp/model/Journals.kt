@@ -1,21 +1,35 @@
 package com.example.myhabittrackerapp.model
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SentimentNeutral
-import androidx.compose.material.icons.filled.SentimentSatisfied
-import androidx.compose.material.icons.filled.SentimentVerySatisfied
-import androidx.compose.ui.graphics.vector.ImageVector
-import java.time.LocalDate
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+import kotlinx.datetime.LocalDate
 
+@Entity(
+    tableName = "journal_entries",
+    foreignKeys = [
+        ForeignKey(
+            entity = Habits::class,
+            parentColumns = ["id"],
+            childColumns = ["habitId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index(value = ["habitId"])]
+)
 data class JournalEntry(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val habitId: Long, // Linked to the specific habit
     val date: LocalDate,
     val content: String,
     val mood: Mood,
+    val isCompleted: Boolean = true,
     val lastEdited: String? = null
 )
 
-enum class Mood(val icon: ImageVector) {
-    VerySatisfied(Icons.Filled.SentimentVerySatisfied),
-    Satisfied(Icons.Filled.SentimentSatisfied),
-    Neutral(Icons.Filled.SentimentNeutral)
+enum class Mood {
+    VerySatisfied,
+    Satisfied,
+    Neutral
 }

@@ -34,6 +34,7 @@ import com.example.myhabittrackerapp.ui.screens.DiscoverScreen
 import com.example.myhabittrackerapp.ui.screens.HabitScreenSettingsViewModel
 import com.example.myhabittrackerapp.ui.screens.HabitSettingsScreen
 import com.example.myhabittrackerapp.ui.screens.JournalScreen
+import com.example.myhabittrackerapp.ui.screens.JournalScreenViewModel
 import com.example.myhabittrackerapp.ui.screens.MyHabitsScreen
 import com.example.myhabittrackerapp.ui.screens.OnboardingScreen
 import com.example.myhabittrackerapp.ui.screens.SettingsScreen
@@ -47,7 +48,10 @@ fun MainScreen(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val habitScreenViewModel: HabitScreenSettingsViewModel = viewModel()
+    
+    val habitScreenViewModel: HabitScreenSettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    val journalScreenViewModel: JournalScreenViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
@@ -69,7 +73,7 @@ fun MainScreen(
                         NavigationBarItem(
                             selected = currentRoute == "habit",
                             onClick = {
-                                navController.navigate("Habit") {
+                                navController.navigate("habit") {
                                     popUpTo(navController.graph.startDestinationId)
                                     launchSingleTop = true
                                 }
@@ -80,6 +84,7 @@ fun MainScreen(
                         NavigationBarItem(
                             selected = currentRoute == "journal",
                             onClick = {
+                                journalScreenViewModel.currentHabitId = null
                                 navController.navigate("journal") {
                                     popUpTo(navController.graph.startDestinationId)
                                     launchSingleTop = true
@@ -144,16 +149,38 @@ fun MainScreen(
                 )
             }
             composable("journal"){
-                JournalScreen()
+                JournalScreen(
+                    appViewModel = journalScreenViewModel,
+                    onSettingsClick = {
+                        val currentId = journalScreenViewModel.currentHabitId
+                        if (currentId != null) {
+                            habitScreenViewModel.habits.value.find { it.id == currentId }?.let {
+                                habitScreenViewModel.markCurrentHabit(it)
+                                navController.navigate("habitSetting")
+                            }
+                        }
+                    }
+                )
             }
             composable("settings"){
                 SettingsScreen()
             }
             composable("habit"){
                 MyHabitsScreen(
-                    habitScreenViewModel,
+                    appViewModel = habitScreenViewModel,
                     onNavigate = {
+                        val selectedHabit = habitScreenViewModel.currentHabit
+                        if (selectedHabit != null) {
+                            journalScreenViewModel.currentHabitId = selectedHabit.id
+                            navController.navigate("journal")
+                        }
+                    },
+                    onAddHabitClick = {
                         navController.navigate("habitSetting")
+                    },
+                    onCheckClick = { habitId ->
+                        journalScreenViewModel.currentHabitId = habitId
+                        navController.navigate("journal")
                     }
                 )
             }

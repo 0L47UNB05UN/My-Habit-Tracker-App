@@ -1,6 +1,5 @@
 package com.example.myhabittrackerapp.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -84,12 +83,13 @@ fun HabitSettingsScreen(
                 // Habit Name Section
                 item {
                     HabitNameSection(
-                        habitName = appViewModel.currentHabit.title,
-                        onNameChange = { appViewModel.onHabitNameChange(it)  },
+                        habitName = appViewModel.title,
+                        onNameChange = { appViewModel.onHabitNameChange(it) },
                         flag = true
                     )
+                    Spacer(modifier = Modifier.height(spacing.medium))
                     HabitNameSection(
-                        habitName = appViewModel.currentHabit.subtitle,
+                        habitName = appViewModel.subtitle,
                         onNameChange = { appViewModel.onSubtitleChange(it) },
                         flag = false
                     )
@@ -97,8 +97,8 @@ fun HabitSettingsScreen(
                 // Habit Type Section
                 item {
                     HabitTypeSection(
-                        selectedType = appViewModel.currentHabit.habitType,
-                        onTypeChange = { appViewModel.onHabitTypeChange(it)  }
+                        selectedType = appViewModel.habitType,
+                        onTypeChange = { appViewModel.onHabitTypeChange(it) }
                     )
                 }
                 // Reminders Card
@@ -222,7 +222,7 @@ private fun HabitNameSection(
                 ) {
                     if (habitName.isEmpty()) {
                         Text(
-                            text = "e.g. Morning Yoga",
+                            text = if (flag) "e.g. Morning Yoga" else "e.g. 30 mins daily",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 16.sp
                         )
@@ -291,13 +291,6 @@ private fun HabitTypeSection(
                 }
             }
         }
-
-        Text(
-            text = "Choose \"Start\" for positive routines and \"Stop\" for breaking bad habits.",
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 4.dp)
-        )
     }
 }
 
@@ -361,7 +354,6 @@ private fun RemindersCard(
                     }
                 }
 
-                // Custom iOS-style toggle
                 IOSSwitch(
                     checked = dailyReminderEnabled,
                     onCheckedChange = onDailyReminderChange
@@ -389,61 +381,11 @@ private fun RemindersCard(
                     color = MaterialTheme.colorScheme.onBackground
                 )
 
-                Surface(
-                    shape = RoundedCornerShape(spacing.small),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.clickable { onReminderTimeClick() }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(
-                            horizontal = spacing.medium,
-                            vertical = spacing.small
-                        ),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = reminderTime.split(" ")[0],
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = " ${reminderTime.split(" ")[1]}",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                modifier = Modifier.padding(horizontal = spacing.large)
-            )
-
-            // Frequency Row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(spacing.large)
-                    .clickable { onFrequencyClick() },
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
                 Text(
-                    text = "Frequency",
+                    text = reminderTime,
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-
-                Text(
-                    text = frequency,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.clickable { onFrequencyClick() }
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -474,11 +416,6 @@ private fun IOSSwitch(
                 .align(Alignment.CenterStart)
                 .clip(CircleShape)
                 .background(Color.White)
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFFD1D1D6),
-                    shape = CircleShape
-                )
         )
     }
 }
@@ -504,8 +441,7 @@ private fun DangerZone(
             border = BorderStroke(
                 width = 1.dp,
                 color = Color(0xFFEF4444).copy(alpha = 0.3f)
-            ),
-            modifier = Modifier.padding(horizontal = spacing.xLarge)
+            )
         ) {
             Icon(
                 imageVector = Icons.Outlined.Delete,
@@ -519,14 +455,6 @@ private fun DangerZone(
                 fontWeight = FontWeight.Bold
             )
         }
-
-        Text(
-            text = "This will remove all history for this habit.\nThis action cannot be undone.",
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = 18.sp,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
     }
 }
 

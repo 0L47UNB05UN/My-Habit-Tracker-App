@@ -48,6 +48,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -62,7 +63,7 @@ import com.example.myhabittrackerapp.ui.theme.spacing
 @Composable
 fun DiscoverScreen(
     onHabitClick: (Habits) -> Unit,
-    ) {
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -101,20 +102,17 @@ fun DiscoverScreen(
                 }
 
                 item {
-                    MindfulnessCard({onHabitClick(it)})
+                    MindfulnessCard({ onHabitClick(it) })
                 }
 
-                // Fixed grid for mindfulness habits - NO nested LazyVerticalGrid
                 item {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(spacing.large)
                     ) {
-                        // First row of mindfulness habits
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(spacing.large)
                         ) {
-                            // Gratitude Journal
                             Box(modifier = Modifier.weight(1f)) {
                                 HabitTile(
                                     icon = Icons.Outlined.AutoStories,
@@ -122,10 +120,10 @@ fun DiscoverScreen(
                                     title = "Gratitude Journal",
                                     subtitle = "Write 3 things",
                                     iconColor = Color(0xFF818CF8),
-                                    iconBackgroundColor = Color(0xFF818CF8).copy(alpha = 0.1f)
+                                    iconBackgroundColor = Color(0xFF818CF8).copy(alpha = 0.1f),
+                                    iconName = "AutoStories"
                                 )
                             }
-                            // Deep Breath
                             Box(modifier = Modifier.weight(1f)) {
                                 HabitTile(
                                     icon = Icons.Outlined.Air,
@@ -133,7 +131,8 @@ fun DiscoverScreen(
                                     title = "Deep Breath",
                                     subtitle = "Box breathing",
                                     iconColor = Color(0xFF34D399),
-                                    iconBackgroundColor = Color(0xFF34D399).copy(alpha = 0.1f)
+                                    iconBackgroundColor = Color(0xFF34D399).copy(alpha = 0.1f),
+                                    iconName = "Air"
                                 )
                             }
                         }
@@ -239,7 +238,6 @@ private fun HealthHabitsGrid(
             modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(spacing.large)
         ) {
-            // Drink Water
             HabitTile(
                 modifier = Modifier.weight(1f),
                 onHabitClick = onHabitClick,
@@ -247,10 +245,10 @@ private fun HealthHabitsGrid(
                 title = "Drink Water",
                 subtitle = "Daily hydration goal",
                 iconColor = MaterialTheme.colorScheme.primary,
-                iconBackgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                iconBackgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                iconName = "WaterDrop"
             )
 
-            // Morning Stretch
             HabitTile(
                 modifier = Modifier.weight(1f),
                 onHabitClick = onHabitClick,
@@ -258,7 +256,8 @@ private fun HealthHabitsGrid(
                 title = "Morning Stretch",
                 subtitle = "10 min flexibility",
                 iconColor = Color(0xFFFF9F80),
-                iconBackgroundColor = Color(0xFFFF9F80).copy(alpha = 0.1f)
+                iconBackgroundColor = Color(0xFFFF9F80).copy(alpha = 0.1f),
+                iconName = "FitnessCenter"
             )
         }
     }
@@ -272,6 +271,7 @@ private fun HabitTile(
     iconColor: Color,
     iconBackgroundColor: Color,
     onHabitClick: (Habits) -> Unit,
+    iconName: String,
     modifier: Modifier = Modifier
 ) {
     var isPressed by remember { mutableStateOf(false) }
@@ -287,8 +287,11 @@ private fun HabitTile(
                         isPressed = false
                         onHabitClick(
                             Habits(
-                                title, subtitle, HabitType.Start, 
-                                Color.Green, icon
+                                title = title,
+                                subtitle = subtitle,
+                                habitType = HabitType.Start,
+                                colorArgb = Color.Green.toArgb(),
+                                iconName = iconName
                             )
                         )
                     }
@@ -304,11 +307,10 @@ private fun HabitTile(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp) // Fixed height
+                .height(180.dp)
                 .padding(spacing.large),
-            verticalArrangement = Arrangement.SpaceBetween // Distribute space evenly
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top section
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -324,7 +326,6 @@ private fun HabitTile(
                 )
             }
 
-            // Middle section
             Column {
                 Text(
                     text = title,
@@ -340,7 +341,6 @@ private fun HabitTile(
                 )
             }
 
-            // Bottom section
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
@@ -358,23 +358,31 @@ private fun HabitTile(
 
 @Composable
 private fun MindfulnessCard(
-    onHabitClick: (Habits ) -> Unit
+    onHabitClick: (Habits) -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(128.dp)
             .clip(RoundedCornerShape(spacing.medium))
-            .clickable { }
+            .clickable {
+                onHabitClick(
+                    Habits(
+                        title = "Deep Meditation",
+                        subtitle = "Unlock mental clarity",
+                        habitType = HabitType.Start,
+                        colorArgb = Color.Blue.toArgb(),
+                        iconName = "SelfImprovement"
+                    )
+                )
+            }
     ) {
-        // Background Image
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
         )
 
-        // Overlays
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -394,19 +402,9 @@ private fun MindfulnessCard(
                 .background(Color.Black.copy(alpha = 0.4f))
         )
 
-        // Content
         Column(
             modifier = Modifier
-                .fillMaxSize().clickable(
-                    onClick = {
-                        onHabitClick(
-                            Habits(
-                                "Deep Meditation",
-                                "Unlock mental clarity"
-                            )
-                        )
-                    }
-                )
+                .fillMaxSize()
                 .padding(spacing.large),
             verticalArrangement = Arrangement.Bottom
         ) {
@@ -423,7 +421,6 @@ private fun MindfulnessCard(
             )
         }
 
-        // Add Button
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
@@ -450,23 +447,23 @@ private fun ProductivityList(
     Column(
         verticalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
-        // Deep Work Item
         ProductivityItem(
             icon = Icons.Outlined.Timer,
             title = "Deep Work",
             subtitle = "90 min focus session",
             iconColor = MaterialTheme.colorScheme.secondary,
             iconBackgroundColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
+            iconName = "Timer",
             onHabitClick = onHabitClick
         )
 
-        // Read 10 Pages Item
         ProductivityItem(
             icon = Icons.Outlined.Book,
             title = "Read 10 Pages",
             subtitle = "Expand your knowledge",
             iconColor = MaterialTheme.colorScheme.tertiary,
             iconBackgroundColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f),
+            iconName = "Book",
             onHabitClick = onHabitClick
         )
     }
@@ -479,6 +476,7 @@ private fun ProductivityItem(
     subtitle: String,
     iconColor: Color,
     iconBackgroundColor: Color,
+    iconName: String,
     onHabitClick: (Habits) -> Unit
 ) {
     Row(
@@ -494,8 +492,11 @@ private fun ProductivityItem(
                 onClick = {
                     onHabitClick(
                         Habits(
-                            title, subtitle, HabitType.Start, iconColor,
-                            icon
+                            title = title,
+                            subtitle = subtitle,
+                            habitType = HabitType.Start,
+                            colorArgb = iconColor.toArgb(),
+                            iconName = iconName
                         )
                     )
                 }
@@ -557,7 +558,6 @@ private fun ProductivityItem(
     }
 }
 
-// Single preview that uses your actual theme
 @Preview(
     name = "Discover Screen",
     showBackground = true,
@@ -567,6 +567,6 @@ private fun ProductivityItem(
 @Composable
 fun DiscoverScreenPreview() {
     MyHabitTrackerAppTheme {
-        DiscoverScreen(){}
+        DiscoverScreen() {}
     }
 }
