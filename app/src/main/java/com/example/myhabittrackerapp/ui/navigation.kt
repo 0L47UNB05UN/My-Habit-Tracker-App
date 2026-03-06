@@ -25,7 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -49,8 +49,8 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     
-    val habitScreenViewModel: HabitScreenSettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)
-    val journalScreenViewModel: JournalScreenViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    val habitScreenViewModel: HabitScreenSettingsViewModel = hiltViewModel()
+    val journalScreenViewModel: JournalScreenViewModel = hiltViewModel()
     
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -176,6 +176,7 @@ fun MainScreen(
                         }
                     },
                     onAddHabitClick = {
+                        habitScreenViewModel.resetCurrentHabit()
                         navController.navigate("habitSetting")
                     },
                     onCheckClick = { habitId ->

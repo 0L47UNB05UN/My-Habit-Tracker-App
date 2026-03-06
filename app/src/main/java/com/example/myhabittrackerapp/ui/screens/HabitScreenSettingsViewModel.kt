@@ -10,12 +10,17 @@ import androidx.lifecycle.viewModelScope
 import com.example.myhabittrackerapp.model.HabitRepository
 import com.example.myhabittrackerapp.model.HabitType
 import com.example.myhabittrackerapp.model.Habits
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class HabitScreenSettingsViewModel(private val habitRepository: HabitRepository) : ViewModel() {
+@HiltViewModel
+class HabitScreenSettingsViewModel @Inject constructor(
+    private val habitRepository: HabitRepository
+) : ViewModel() {
     var title by mutableStateOf("")
     var subtitle by mutableStateOf("")
     var habitType by mutableStateOf(HabitType.Start)

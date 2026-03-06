@@ -9,6 +9,7 @@ import com.example.myhabittrackerapp.model.HabitRepository
 import com.example.myhabittrackerapp.model.JournalEntry
 import com.example.myhabittrackerapp.model.JournalRepository
 import com.example.myhabittrackerapp.model.Mood
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,9 +22,11 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class JournalScreenViewModel(
+@HiltViewModel
+class JournalScreenViewModel @Inject constructor(
     private val journalRepository: JournalRepository,
     private val habitRepository: HabitRepository
 ) : ViewModel() {
