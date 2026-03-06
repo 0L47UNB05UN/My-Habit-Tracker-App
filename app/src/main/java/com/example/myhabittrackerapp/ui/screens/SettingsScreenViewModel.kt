@@ -1,8 +1,10 @@
 package com.example.myhabittrackerapp.ui.screens
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myhabittrackerapp.data.repository.SettingsRepository
+import com.example.myhabittrackerapp.model.ThemeClass
 import com.example.myhabittrackerapp.model.UserSettings
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,15 +19,11 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(UserSettings())
     val uiState: StateFlow<UserSettings> = _uiState.asStateFlow()
-
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
     init {
         loadSettings()
     }
-
-    fun isRegistered(): Boolean = _uiState.value.userName.isNotBlank()
 
     private fun loadSettings() {
         viewModelScope.launch {
@@ -45,6 +43,12 @@ class SettingsViewModel @Inject constructor(
     fun updateTheme(isDark: Boolean) {
         viewModelScope.launch {
             repository.updateTheme(isDark)
+        }
+    }
+
+    fun updateThemeClass(themeClass: ThemeClass){
+        viewModelScope.launch {
+            repository.updateThemeClass(themeClass)
         }
     }
 

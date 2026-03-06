@@ -51,12 +51,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myhabittrackerapp.model.HabitType
 import com.example.myhabittrackerapp.model.Habits
-import com.example.myhabittrackerapp.ui.theme.MyHabitTrackerAppTheme
 import com.example.myhabittrackerapp.ui.theme.spacing
 
 @Composable
@@ -271,8 +269,8 @@ private fun HabitTile(
                         isPressed = false
                         onHabitClick(
                             Habits(
-                                title, subtitle, HabitType.Start, 
-                                Color.Green, icon
+                                title=title, subtitle=subtitle, habitType=HabitType.Start,
+                                color=Color.Green, icon=icon
                             )
                         )
                     }
@@ -373,8 +371,8 @@ private fun MindfulnessCard(
                     onClick = {
                         onHabitClick(
                             Habits(
-                                "Deep Meditation",
-                                "Unlock mental clarity"
+                                title="Deep Meditation",
+                                subtitle="Unlock mental clarity"
                             )
                         )
                     }
@@ -461,8 +459,8 @@ private fun ProductivityItem(
                 onClick = {
                     onHabitClick(
                         Habits(
-                            title, subtitle, HabitType.Start, iconColor,
-                            icon
+                            title=title, subtitle=subtitle, habitType=HabitType.Start,
+                            color=iconColor, icon=icon
                         )
                     )
                 }

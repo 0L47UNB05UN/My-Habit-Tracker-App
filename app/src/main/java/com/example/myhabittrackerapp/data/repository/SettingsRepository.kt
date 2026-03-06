@@ -1,10 +1,12 @@
 package com.example.myhabittrackerapp.data.repository
 
+import android.content.res.Resources
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.example.myhabittrackerapp.model.ThemeClass
 import com.example.myhabittrackerapp.model.UserSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -19,6 +21,7 @@ class SettingsRepository @Inject constructor(
     companion object {
         val USER_NAME = stringPreferencesKey("")
         val IS_DARK_MODE = booleanPreferencesKey("is_dark_mode")
+        val THEME_CLASS = stringPreferencesKey(ThemeClass.System.name)
         val DAILY_NUDGE_ENABLED = booleanPreferencesKey("daily_nudge_enabled")
         val MONTHLY_RECAP_ENABLED = booleanPreferencesKey("monthly_recap_enabled")
         val REMINDER_TIME = stringPreferencesKey("reminder_time")
@@ -29,6 +32,7 @@ class SettingsRepository @Inject constructor(
             UserSettings(
                 userName = preferences[USER_NAME] ?: "",
                 isDarkMode = preferences[IS_DARK_MODE] ?: false,
+                themeClass = ThemeClass.valueOf(preferences[THEME_CLASS]?: ThemeClass.System.name),
                 dailyNudgeEnabled = preferences[DAILY_NUDGE_ENABLED] ?: true,
                 monthlyRecapEnabled = preferences[MONTHLY_RECAP_ENABLED] ?: false,
                 reminderTime = preferences[REMINDER_TIME] ?: "21:30"
@@ -40,6 +44,7 @@ class SettingsRepository @Inject constructor(
         return UserSettings(
             userName = preferences[USER_NAME] ?: "Elena Thorne",
             isDarkMode = preferences[IS_DARK_MODE] ?: false,
+            themeClass = ThemeClass.valueOf(preferences[THEME_CLASS]?: ThemeClass.System.name),
             dailyNudgeEnabled = preferences[DAILY_NUDGE_ENABLED] ?: true,
             monthlyRecapEnabled = preferences[MONTHLY_RECAP_ENABLED] ?: false,
             reminderTime = preferences[REMINDER_TIME] ?: "21:30"
@@ -56,6 +61,12 @@ class SettingsRepository @Inject constructor(
     suspend fun updateTheme(isDark: Boolean) {
         dataStore.edit { preferences ->
             preferences[IS_DARK_MODE] = isDark
+        }
+    }
+
+    suspend fun updateThemeClass(themeClass: ThemeClass){
+        dataStore.edit{
+            preferences -> preferences[THEME_CLASS] = themeClass.name
         }
     }
 

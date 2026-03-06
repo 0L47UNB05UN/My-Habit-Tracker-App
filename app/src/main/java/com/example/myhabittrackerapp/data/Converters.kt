@@ -1,6 +1,7 @@
 package com.example.myhabittrackerapp.data
 
 import androidx.room.TypeConverter
+import com.example.myhabittrackerapp.model.HabitType
 import com.example.myhabittrackerapp.model.Mood
 import java.util.Date
 
@@ -25,4 +26,9 @@ class Converters {
     fun moodToString(mood: Mood): String {
         return mood.name
     }
+    @TypeConverter
+    fun fromHabitType(habitType: HabitType): String = habitType.name
+
+    @TypeConverter
+    fun toHabitType(habitType: String): HabitType = HabitType.valueOf(habitType)
 }

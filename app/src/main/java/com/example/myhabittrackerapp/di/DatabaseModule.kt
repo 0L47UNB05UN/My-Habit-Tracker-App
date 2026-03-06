@@ -4,8 +4,10 @@ package com.example.myhabittrackerapp.di
 
 import android.content.Context
 import androidx.room.Room
+import com.example.myhabittrackerapp.data.HabitDao
 import com.example.myhabittrackerapp.data.JournalDatabase
 import com.example.myhabittrackerapp.data.JournalEntryDao
+import com.example.myhabittrackerapp.data.repository.HabitDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,9 +33,30 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun provideHabitDatabase(
+        @ApplicationContext context: Context
+    ): HabitDatabase {
+        return Room.databaseBuilder(
+            context,
+            HabitDatabase::class.java,
+            HabitDatabase.DATABASE_NAME
+        ).build()
+    }
+
+    @Provides
+    @Singleton
     fun provideJournalEntryDao(
         database: JournalDatabase
     ): JournalEntryDao {
         return database.journalEntryDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideHabitDao(
+        database: HabitDatabase
+    ): HabitDao {
+        return database.habitDao()
+    }
 }
+

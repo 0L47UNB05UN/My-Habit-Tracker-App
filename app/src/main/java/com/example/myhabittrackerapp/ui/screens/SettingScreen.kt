@@ -1,9 +1,11 @@
 package com.example.myhabittrackerapp.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,8 +57,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.myhabittrackerapp.model.ThemeClass
 import com.example.myhabittrackerapp.model.UserSettings
 import com.example.myhabittrackerapp.ui.theme.spacing
 
@@ -66,7 +70,6 @@ fun SettingsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-
     if (isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
@@ -76,6 +79,7 @@ fun SettingsScreen(
             settings = uiState,
             onUserNameChange = viewModel::updateUserName,
             onThemeChange = viewModel::updateTheme,
+            onThemeClassChange = viewModel::updateThemeClass,
             onDailyNudgeChange = viewModel::updateDailyNudge,
             onMonthlyRecapChange = viewModel::updateMonthlyRecap,
             onReminderTimeClick = { /* Show time picker dialog */ },
@@ -90,13 +94,13 @@ fun SettingsContent(
     settings: UserSettings,
     onUserNameChange: (String) -> Unit,
     onThemeChange: (Boolean) -> Unit,
+    onThemeClassChange: (ThemeClass)->Unit,
     onDailyNudgeChange: (Boolean) -> Unit,
     onMonthlyRecapChange: (Boolean) -> Unit,
     onReminderTimeClick: () -> Unit,
     onExportClick: () -> Unit,
     onClearDataClick: () -> Unit
 ) {
-    // Your existing UI code, but use settings parameter instead of local state
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -126,8 +130,9 @@ fun SettingsContent(
                 }
                 item {
                     AppearanceSection(
-                        isDarkMode = settings.isDarkMode,
-                        onThemeChange = onThemeChange
+                        onThemeClassChange = onThemeClassChange,
+                        onThemeChange = onThemeChange,
+                        themeClass = settings.themeClass
                     )
                 }
                 item {
@@ -177,7 +182,7 @@ private fun SettingsTopBar() {
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.width(40.dp))
         }
@@ -208,7 +213,6 @@ private fun ProfileCard(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                     )
             ) {
-                // Abstract pattern placeholder
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
@@ -230,8 +234,6 @@ private fun ProfileCard(
                     }
                 }
             }
-
-            // Profile section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -239,7 +241,6 @@ private fun ProfileCard(
                     .padding(horizontal = spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Avatar with camera button
                 Box(
                     modifier = Modifier
                         .size(96.dp)
@@ -288,10 +289,7 @@ private fun ProfileCard(
                         )
                     }
                 }
-
                 Spacer(modifier = Modifier.height(spacing.small))
-
-                // Name input
                 BasicTextField(
                     value = userName,
                     onValueChange = onNameChange,
@@ -299,7 +297,7 @@ private fun ProfileCard(
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        textAlign = TextAlign.Center
                     ),
                     decorationBox = { innerTextField ->
                         Box(
@@ -311,7 +309,6 @@ private fun ProfileCard(
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
-
                 Text(
                     text = "Personalizing your local journal",
                     fontSize = 14.sp,
@@ -325,7 +322,8 @@ private fun ProfileCard(
 
 @Composable
 private fun AppearanceSection(
-    isDarkMode: Boolean,
+    themeClass: ThemeClass,
+    onThemeClassChange: (ThemeClass) -> Unit,
     onThemeChange: (Boolean) -> Unit
 ) {
     Column(
@@ -340,13 +338,38 @@ private fun AppearanceSection(
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            //Light theme option
+            val systemDefault: Boolean = isSystemInDarkTheme()
             ThemeOption(
-                isSelected = !isDarkMode,
-                onClick = { onThemeChange(false) },
+                isSelected = themeClass.name == "System",
+                onClick = { Log.d("mine", "$themeClass");
+                    onThemeChange(systemDefault); onThemeClassChange(ThemeClass.System) },
+                previewContent = {
+                    Column(
+                        modifier = Modifier
+                            .height(64.dp)
+                            .background(Color(0xFFF5F5F5), RoundedCornerShape(4.dp))
+                            .padding(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp, 8.dp)
+                                .background(Color(0xFFE0E0E0), RoundedCornerShape(2.dp))
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp, 8.dp)
+                                .background(Color(0xFFD0D0D0), RoundedCornerShape(2.dp))
+                        )
+                    }
+                },
+                label = "System Default"
+            )
+            ThemeOption(
+                isSelected = themeClass.name == "Light",
+                onClick = { onThemeChange(false); onThemeClassChange(ThemeClass.Light) },
                 previewContent = {
                     Column(
                         modifier = Modifier
@@ -368,10 +391,9 @@ private fun AppearanceSection(
                 },
                 label = "Light"
             )
-            // Dark theme option
             ThemeOption(
-                isSelected = isDarkMode,
-                onClick = { onThemeChange(true) },
+                isSelected = themeClass.name == "Dark",
+                onClick = { onThemeChange(true); onThemeClassChange(ThemeClass.Dark) },
                 previewContent = {
                     Column(
                         modifier = Modifier
@@ -679,7 +701,7 @@ private fun DataPrivacySection(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {onClearDataClick()},
+                        .clickable { onClearDataClick() },
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {

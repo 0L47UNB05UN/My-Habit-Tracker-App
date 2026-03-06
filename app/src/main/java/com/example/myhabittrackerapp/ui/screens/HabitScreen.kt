@@ -29,11 +29,13 @@ import androidx.compose.material.icons.outlined.DoNotDisturbOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.myhabittrackerapp.model.HabitType
 import com.example.myhabittrackerapp.ui.theme.spacing
 
@@ -52,6 +55,16 @@ fun MyHabitsScreen(
     appViewModel: HabitScreenSettingsViewModel,
     onNavigate: () -> Unit = {}
 ) {
+    val habits by appViewModel.habits.collectAsStateWithLifecycle()
+    val isLoading by appViewModel.isLoading.collectAsStateWithLifecycle()
+
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -62,9 +75,7 @@ fun MyHabitsScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
         ) {
-            // Header
             MyHabitsHeader()
-            // Content
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -87,15 +98,15 @@ fun MyHabitsScreen(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(spacing.large)
                     ) {
-                        appViewModel.habits.value.filter { habit -> habit.habitType == HabitType.Start }.forEach { habits ->
+                        habits.filter { it.habitType == HabitType.Start }.forEach { habit ->
                             HabitCard(
-                                title = habits.title,
-                                subtitle = habits.subtitle,
-                                color = habits.color,
-                                habitType = habits.habitType,
-                                icon = habits.icon,
+                                title = habit.title,
+                                subtitle = habit.subtitle,
+                                color = habit.color,
+                                habitType = habit.habitType,
+                                icon = habit.icon,
                                 onNavigate = {
-                                    appViewModel.markCurrentHabit(habits)
+                                    appViewModel.markCurrentHabit(habit)
                                     onNavigate()
                                 }
                             )
@@ -114,21 +125,24 @@ fun MyHabitsScreen(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(spacing.large)
                     ) {
-                        appViewModel.habits.value.filter { habit -> habit.habitType == HabitType.Stop }.forEach { habits ->
+                        habits.filter { it.habitType == HabitType.Stop }.forEach { habit ->
                             HabitCard(
-                                title = habits.title,
-                                subtitle = habits.subtitle,
-                                color = habits.color,
-                                habitType = habits.habitType,
-                                icon = habits.icon,
-                                onNavigate = { appViewModel.markCurrentHabit(habits); onNavigate() }
+                                title = habit.title,
+                                subtitle = habit.subtitle,
+                                color = habit.color,
+                                habitType = habit.habitType,
+                                icon = habit.icon,
+                                onNavigate = {
+                                    appViewModel.markCurrentHabit(habit)
+                                    onNavigate()
+                                }
                             )
                         }
                     }
                 }
             }
         }
-        FloatingAddButton({appViewModel.resetCurrentHabit()}, onNavigate)
+        FloatingAddButton({ appViewModel.resetCurrentHabit() }, onNavigate)
     }
 }
 
