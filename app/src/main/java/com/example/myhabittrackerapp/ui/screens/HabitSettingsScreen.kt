@@ -1,5 +1,9 @@
 package com.example.myhabittrackerapp.ui.screens
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,13 +36,20 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,14 +57,74 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.myhabittrackerapp.model.HabitType
 import com.example.myhabittrackerapp.ui.theme.spacing
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitSettingsScreen(
     appViewModel: HabitScreenSettingsViewModel,
     onBackClick: () -> Unit = {}
 ) {
+    var showTimePicker by remember { mutableStateOf(false) }
+    val timePickerState = rememberTimePickerState(
+        initialHour = 17,
+        initialMinute = 0
+    )
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (!isGranted) {
+                appViewModel.dailyReminderEnabled = false
+            }
+        }
+    )
+
+    if (showTimePicker) {
+        Dialog(onDismissRequest = { showTimePicker = false }) {
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Select Notification Time",
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(bottom = 20.dp)
+                    )
+                    TimePicker(state = timePickerState)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Text(
+                            text = "Cancel",
+                            modifier = Modifier.clickable { showTimePicker = false }.padding(12.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "OK",
+                            modifier = Modifier.clickable {
+                                val hour = if (timePickerState.hour < 10) "0${timePickerState.hour}" else "${timePickerState.hour}"
+                                val minute = if (timePickerState.minute < 10) "0${timePickerState.minute}" else "${timePickerState.minute}"
+                                appViewModel.reminderTime = "$hour:$minute"
+                                showTimePicker = false
+                            }.padding(12.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -64,12 +135,10 @@ fun HabitSettingsScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
         ) {
-            // Header
             HabitSettingsHeader(
                 onBackClick = onBackClick,
                 onSaveClick = { appViewModel.save(); onBackClick() }
             )
-            // Main Content
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -80,7 +149,6 @@ fun HabitSettingsScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(spacing.xLarge)
             ) {
-                // Habit Name Section
                 item {
                     HabitNameSection(
                         habitName = appViewModel.title,
@@ -94,25 +162,27 @@ fun HabitSettingsScreen(
                         flag = false
                     )
                 }
-                // Habit Type Section
                 item {
                     HabitTypeSection(
                         selectedType = appViewModel.habitType,
                         onTypeChange = { appViewModel.onHabitTypeChange(it) }
                     )
                 }
-                // Reminders Card
                 item {
                     RemindersCard(
                         dailyReminderEnabled = appViewModel.dailyReminderEnabled,
-                        onDailyReminderChange = { appViewModel.dailyReminderEnabled = it },
+                        onDailyReminderChange = { enabled ->
+                            appViewModel.dailyReminderEnabled = enabled
+                            if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        },
                         reminderTime = appViewModel.reminderTime,
-                        onReminderTimeClick = {  },
+                        onReminderTimeClick = { showTimePicker = true },
                         frequency = appViewModel.frequency,
                         onFrequencyClick = {  }
                     )
                 }
-                // Danger Zone
                 item {
                     DangerZone(
                         onDeleteClick = { appViewModel.delete(); onBackClick() }
@@ -145,7 +215,6 @@ private fun HabitSettingsHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Back button
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.clickable { onBackClick() }
@@ -251,7 +320,6 @@ private fun HabitTypeSection(
             letterSpacing = 0.5.sp
         )
 
-        // Segmented Control
         Surface(
             shape = RoundedCornerShape(spacing.medium),
             color = MaterialTheme.colorScheme.surfaceVariant,
@@ -354,7 +422,7 @@ private fun RemindersCard(
                     }
                 }
 
-                IOSSwitch(
+                androidx.compose.material3.Switch(
                     checked = dailyReminderEnabled,
                     onCheckedChange = onDailyReminderChange
                 )
@@ -365,7 +433,6 @@ private fun RemindersCard(
                 modifier = Modifier.padding(horizontal = spacing.large)
             )
 
-            // Time Picker Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -389,34 +456,6 @@ private fun RemindersCard(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun IOSSwitch(
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .size(width = 44.dp, height = 24.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                if (checked)
-                    MaterialTheme.colorScheme.primary
-                else
-                    Color(0xFFD1D1D6)
-            )
-            .clickable { onCheckedChange(!checked) }
-    ) {
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .offset(x = if (checked) 20.dp else 2.dp)
-                .align(Alignment.CenterStart)
-                .clip(CircleShape)
-                .background(Color.White)
-        )
     }
 }
 

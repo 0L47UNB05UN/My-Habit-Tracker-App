@@ -10,7 +10,9 @@ data class Habits(
     val subtitle: String,
     val habitType: HabitType = HabitType.Start,
     val colorArgb: Int,
-    val iconName: String
+    val iconName: String,
+    val reminderTime: String? = null,
+    val isReminderEnabled: Boolean = true
 )
 
 enum class HabitType(val displayName: String) {

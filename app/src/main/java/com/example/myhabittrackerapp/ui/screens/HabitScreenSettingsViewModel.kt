@@ -25,7 +25,7 @@ class HabitScreenSettingsViewModel @Inject constructor(
     var subtitle by mutableStateOf("")
     var habitType by mutableStateOf(HabitType.Start)
     var dailyReminderEnabled by mutableStateOf(true)
-    var reminderTime by mutableStateOf("07:00 PM")
+    var reminderTime by mutableStateOf("19:00") // Use 24h format consistently
     var frequency by mutableStateOf("Every Day")
 
     var currentHabit by mutableStateOf<Habits?>(null)
@@ -42,6 +42,8 @@ class HabitScreenSettingsViewModel @Inject constructor(
         title = ""
         subtitle = ""
         habitType = HabitType.Start
+        dailyReminderEnabled = true
+        reminderTime = "19:00"
     }
 
     fun markCurrentHabit(habit: Habits) {
@@ -49,6 +51,8 @@ class HabitScreenSettingsViewModel @Inject constructor(
         title = habit.title
         subtitle = habit.subtitle
         habitType = habit.habitType
+        dailyReminderEnabled = habit.isReminderEnabled
+        reminderTime = habit.reminderTime ?: "19:00"
     }
 
     fun save() {
@@ -57,13 +61,17 @@ class HabitScreenSettingsViewModel @Inject constructor(
                 title = title,
                 subtitle = subtitle,
                 habitType = habitType,
-                colorArgb = if (habitType == HabitType.Start) Color.Green.toArgb() else Color.Red.toArgb()
+                colorArgb = if (habitType == HabitType.Start) Color.Green.toArgb() else Color.Red.toArgb(),
+                reminderTime = reminderTime,
+                isReminderEnabled = dailyReminderEnabled
             ) ?: Habits(
                 title = title,
                 subtitle = subtitle,
                 habitType = habitType,
                 colorArgb = if (habitType == HabitType.Start) Color.Green.toArgb() else Color.Red.toArgb(),
-                iconName = "CheckCircle"
+                iconName = "CheckCircle",
+                reminderTime = reminderTime,
+                isReminderEnabled = dailyReminderEnabled
             )
 
             if (habit.id == 0L) {
