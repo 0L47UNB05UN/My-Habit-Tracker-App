@@ -17,7 +17,7 @@ class SettingsRepository @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) {
     companion object {
-        val USER_NAME = stringPreferencesKey("user_name")
+        val USER_NAME = stringPreferencesKey("")
         val IS_DARK_MODE = booleanPreferencesKey("is_dark_mode")
         val DAILY_NUDGE_ENABLED = booleanPreferencesKey("daily_nudge_enabled")
         val MONTHLY_RECAP_ENABLED = booleanPreferencesKey("monthly_recap_enabled")
@@ -27,7 +27,7 @@ class SettingsRepository @Inject constructor(
     val settingsFlow: Flow<UserSettings> = dataStore.data
         .map { preferences ->
             UserSettings(
-                userName = preferences[USER_NAME] ?: "Elena Thorne",
+                userName = preferences[USER_NAME] ?: "",
                 isDarkMode = preferences[IS_DARK_MODE] ?: false,
                 dailyNudgeEnabled = preferences[DAILY_NUDGE_ENABLED] ?: true,
                 monthlyRecapEnabled = preferences[MONTHLY_RECAP_ENABLED] ?: false,

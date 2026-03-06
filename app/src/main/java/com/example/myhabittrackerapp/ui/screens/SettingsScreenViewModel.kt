@@ -25,6 +25,8 @@ class SettingsViewModel @Inject constructor(
         loadSettings()
     }
 
+    fun isRegistered(): Boolean = _uiState.value.userName.isNotBlank()
+
     private fun loadSettings() {
         viewModelScope.launch {
             repository.settingsFlow.collect { settings ->
@@ -37,7 +39,6 @@ class SettingsViewModel @Inject constructor(
     fun updateUserName(name: String) {
         viewModelScope.launch {
             repository.updateUserName(name)
-            // No need to update UI state manually - flow will update it
         }
     }
 
@@ -74,7 +75,7 @@ class SettingsViewModel @Inject constructor(
     fun exportData() {
         viewModelScope.launch {
             val settings = repository.getSettings()
-            // Convert to CSV/JSON and share
+            //some other steps
         }
     }
 }

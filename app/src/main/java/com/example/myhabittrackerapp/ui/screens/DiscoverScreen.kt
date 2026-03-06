@@ -73,9 +73,7 @@ fun DiscoverScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
         ) {
-            // Header
             HeaderSection()
-            // Content Area
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -83,14 +81,12 @@ fun DiscoverScreen(
                 contentPadding = PaddingValues(horizontal = spacing.xLarge, vertical = spacing.large),
                 verticalArrangement = Arrangement.spacedBy(spacing.xLarge)
             ) {
-                // Health Essentials Section
                 item {
                     HabitSection()
                 }
                 item {
                     HealthHabitsGrid({ onHabitClick(it) })
                 }
-                // Mindfulness Section
                 item {
                     Text(
                         text = "Mindfulness",
@@ -99,22 +95,17 @@ fun DiscoverScreen(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
-
                 item {
                     MindfulnessCard({onHabitClick(it)})
                 }
-
-                // Fixed grid for mindfulness habits - NO nested LazyVerticalGrid
                 item {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(spacing.large)
                     ) {
-                        // First row of mindfulness habits
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(spacing.large)
                         ) {
-                            // Gratitude Journal
                             Box(modifier = Modifier.weight(1f)) {
                                 HabitTile(
                                     icon = Icons.Outlined.AutoStories,
@@ -125,7 +116,6 @@ fun DiscoverScreen(
                                     iconBackgroundColor = Color(0xFF818CF8).copy(alpha = 0.1f)
                                 )
                             }
-                            // Deep Breath
                             Box(modifier = Modifier.weight(1f)) {
                                 HabitTile(
                                     icon = Icons.Outlined.Air,
@@ -139,8 +129,6 @@ fun DiscoverScreen(
                         }
                     }
                 }
-
-                // Productivity Section
                 item {
                     Text(
                         text = "Productivity",
@@ -150,7 +138,6 @@ fun DiscoverScreen(
                         modifier = Modifier.padding(top = spacing.medium)
                     )
                 }
-
                 item {
                     ProductivityList(onHabitClick)
                 }
@@ -181,7 +168,6 @@ private fun HeaderSection() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-
         Box(
             modifier = Modifier
                 .size(40.dp)
@@ -239,7 +225,6 @@ private fun HealthHabitsGrid(
             modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(spacing.large)
         ) {
-            // Drink Water
             HabitTile(
                 modifier = Modifier.weight(1f),
                 onHabitClick = onHabitClick,
@@ -250,7 +235,6 @@ private fun HealthHabitsGrid(
                 iconBackgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
             )
 
-            // Morning Stretch
             HabitTile(
                 modifier = Modifier.weight(1f),
                 onHabitClick = onHabitClick,
@@ -308,7 +292,6 @@ private fun HabitTile(
                 .padding(spacing.large),
             verticalArrangement = Arrangement.SpaceBetween // Distribute space evenly
         ) {
-            // Top section
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -323,8 +306,6 @@ private fun HabitTile(
                     modifier = Modifier.size(20.dp)
                 )
             }
-
-            // Middle section
             Column {
                 Text(
                     text = title,
@@ -332,15 +313,12 @@ private fun HabitTile(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-
                 Text(
                     text = subtitle,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
-            // Bottom section
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
@@ -367,14 +345,11 @@ private fun MindfulnessCard(
             .clip(RoundedCornerShape(spacing.medium))
             .clickable { }
     ) {
-        // Background Image
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
         )
-
-        // Overlays
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -387,14 +362,11 @@ private fun MindfulnessCard(
                     )
                 )
         )
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.4f))
         )
-
-        // Content
         Column(
             modifier = Modifier
                 .fillMaxSize().clickable(
@@ -422,8 +394,6 @@ private fun MindfulnessCard(
                 color = Color.White.copy(alpha = 0.7f)
             )
         }
-
-        // Add Button
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
@@ -450,7 +420,6 @@ private fun ProductivityList(
     Column(
         verticalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
-        // Deep Work Item
         ProductivityItem(
             icon = Icons.Outlined.Timer,
             title = "Deep Work",
@@ -459,8 +428,6 @@ private fun ProductivityList(
             iconBackgroundColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f),
             onHabitClick = onHabitClick
         )
-
-        // Read 10 Pages Item
         ProductivityItem(
             icon = Icons.Outlined.Book,
             title = "Read 10 Pages",
@@ -517,9 +484,7 @@ private fun ProductivityItem(
                 modifier = Modifier.size(20.dp)
             )
         }
-
         Spacer(modifier = Modifier.width(spacing.large))
-
         Column(
             modifier = Modifier.weight(1f)
         ) {
@@ -535,7 +500,6 @@ private fun ProductivityItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-
         Box(
             modifier = Modifier
                 .size(32.dp)
@@ -558,15 +522,10 @@ private fun ProductivityItem(
 }
 
 // Single preview that uses your actual theme
-@Preview(
-    name = "Discover Screen",
-    showBackground = true,
-    showSystemUi = true,
-    device = "id:pixel_6"
-)
-@Composable
-fun DiscoverScreenPreview() {
-    MyHabitTrackerAppTheme {
-        DiscoverScreen(){}
-    }
-}
+//@Preview
+//@Composable
+//fun DiscoverScreenPreview() {
+//    MyHabitTrackerAppTheme {
+//        DiscoverScreen(){}
+//    }
+//}
