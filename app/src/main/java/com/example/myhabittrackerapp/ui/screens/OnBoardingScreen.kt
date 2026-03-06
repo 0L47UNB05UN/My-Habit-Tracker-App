@@ -127,7 +127,7 @@ fun OnboardingScreen(
             item {
                 BottomSection(
                     onStartJourney = {
-                        viewModel.updateUserName("User Name")
+                        viewModel.updateUserName(userName)
                         onOnboardingComplete()
                     }
                 )
@@ -299,7 +299,6 @@ fun HabitBuilderSection(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Habit input row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),

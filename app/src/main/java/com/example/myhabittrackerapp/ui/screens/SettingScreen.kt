@@ -351,7 +351,7 @@ private fun AppearanceSection(
                         modifier = Modifier
                             .height(64.dp)
                             .background(Color(0xFFF5F5F5), RoundedCornerShape(4.dp))
-                            .padding(8.dp)
+                            .padding(8.dp).weight(1f)
                     ) {
                         Box(
                             modifier = Modifier
@@ -375,7 +375,7 @@ private fun AppearanceSection(
                         modifier = Modifier
                             .height(64.dp)
                             .background(Color(0xFFF5F5F5), RoundedCornerShape(4.dp))
-                            .padding(8.dp)
+                            .padding(8.dp).weight(1f)
                     ) {
                         Box(
                             modifier = Modifier
@@ -399,7 +399,7 @@ private fun AppearanceSection(
                         modifier = Modifier
                             .height(64.dp)
                             .background(Color(0xFF1A1A1A), RoundedCornerShape(4.dp))
-                            .padding(8.dp)
+                            .padding(8.dp).weight(1f)
                     ) {
                         Box(
                             modifier = Modifier

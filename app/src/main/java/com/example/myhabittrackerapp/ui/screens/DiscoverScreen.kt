@@ -264,9 +264,6 @@ private fun HabitTile(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
-                        isPressed = true
-                        tryAwaitRelease()
-                        isPressed = false
                         onHabitClick(
                             Habits(
                                 title=title, subtitle=subtitle, habitType=HabitType.Start,
