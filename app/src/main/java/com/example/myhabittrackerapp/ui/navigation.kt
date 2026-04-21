@@ -88,7 +88,7 @@ fun MainScreen(
                                 label = { Text("Home") }
                             )
                             NavigationBarItem(
-                                selected = currentRoute == "habit",
+                                selected = currentRoute == "habit" || (currentRoute == "journal" && journalScreenViewModel.currentHabitId != null),
                                 onClick = {
                                     navController.navigate("habit") {
                                         popUpTo(navController.graph.startDestinationId)
@@ -99,7 +99,7 @@ fun MainScreen(
                                 label = { Text("Habit") }
                             )
                             NavigationBarItem(
-                                selected = currentRoute == "journal",
+                                selected = currentRoute == "journal" && journalScreenViewModel.currentHabitId == null,
                                 onClick = {
                                     journalScreenViewModel.currentHabitId = null
                                     navController.navigate("journal") {
@@ -179,6 +179,8 @@ fun MainScreen(
                                 habitScreenViewModel.markCurrentHabit(it)
                                 navController.navigate("habitSetting")
                             }
+                        } else {
+                            navController.navigate("settings")
                         }
                     }
                 )

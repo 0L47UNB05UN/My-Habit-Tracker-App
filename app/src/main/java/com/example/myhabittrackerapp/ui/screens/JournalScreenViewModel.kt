@@ -46,6 +46,9 @@ class JournalScreenViewModel @Inject constructor(
         set(value) { _currentHabitId.value = value }
 
     var searchQuery by mutableStateOf("")
+    
+    // New state for toggling between List and Calendar
+    var isCalendarView by mutableStateOf(false)
 
     val currentHabitName: StateFlow<String> = _currentHabitId.map { id ->
         if (id != null) {
@@ -82,6 +85,7 @@ class JournalScreenViewModel @Inject constructor(
         currentEntry = entry.content
         isCompleted = entry.isCompleted
         selectedMood = entry.mood
+        isCalendarView = false // Switch to list/editor view when editing
     }
 
     fun cancelEditing() {

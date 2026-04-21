@@ -1,5 +1,6 @@
 package com.example.myhabittrackerapp.ui.screens
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,12 +23,16 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Circle
@@ -34,6 +40,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -46,22 +53,29 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myhabittrackerapp.model.JournalEntry
 import com.example.myhabittrackerapp.ui.theme.spacing
-import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 
 @Composable
 fun JournalScreen(
@@ -74,9 +88,7 @@ fun JournalScreen(
     val hasEntryForToday = journalEntries.any { it.date == appViewModel.today }
     
     val listState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
 
-    // Scroll to top when editing starts
     LaunchedEffect(isEditing) {
         if (isEditing) {
             listState.animateScrollToItem(0)
@@ -93,44 +105,58 @@ fun JournalScreen(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
         ) {
-            JournalHeader(habitName, appViewModel.today, onSettingsClick)
+            JournalHeader(
+                habitName = habitName,
+                date = appViewModel.today,
+                searchQuery = appViewModel.searchQuery,
+                onSearchQueryChange = { appViewModel.searchQuery = it },
+                onSettingsClick = onSettingsClick,
+                isCalendarView = appViewModel.isCalendarView,
+                onViewToggle = { appViewModel.isCalendarView = it }
+            )
             
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 88.dp),
-                contentPadding = PaddingValues(horizontal = spacing.large, vertical = spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(spacing.large)
-            ) {
-                // Show input card if no entry for today OR if we are currently editing an entry
-                if (!hasEntryForToday || isEditing) {
-                    item(key = "add_journal_card") {
-                        AddJournalCard(
-                            currentEntry = appViewModel.currentEntry,
-                            onEntryChange = { appViewModel.currentEntry = it },
-                            isCompleted = appViewModel.isCompleted,
-                            onToggleCompletion = { appViewModel.isCompleted = it },
-                            onSave = { appViewModel.save() },
-                            date = appViewModel.editingDate ?: appViewModel.today,
-                            isEditing = isEditing,
-                            onCancel = { appViewModel.cancelEditing() }
-                        )
-                    }
-                }
-
-                items(journalEntries, key = { it.id }) { entry ->
-                    JournalEntryCard(
-                        entry = entry,
-                        onEditClick = {
-                            appViewModel.startEditing(entry)
-                        }
+            Crossfade(targetState = appViewModel.isCalendarView, label = "view_fade") { isCalendar ->
+                if (isCalendar) {
+                    HabitCalendarView(
+                        entries = journalEntries,
+                        today = appViewModel.today
                     )
-                }
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 88.dp),
+                        contentPadding = PaddingValues(horizontal = spacing.large, vertical = spacing.medium),
+                        verticalArrangement = Arrangement.spacedBy(spacing.large)
+                    ) {
+                        if (!hasEntryForToday || isEditing) {
+                            item(key = "add_journal_card") {
+                                AddJournalCard(
+                                    currentEntry = appViewModel.currentEntry,
+                                    onEntryChange = { appViewModel.currentEntry = it },
+                                    isCompleted = appViewModel.isCompleted,
+                                    onToggleCompletion = { appViewModel.isCompleted = it },
+                                    onSave = { appViewModel.save() },
+                                    date = appViewModel.editingDate ?: appViewModel.today,
+                                    isEditing = isEditing,
+                                    onCancel = { appViewModel.cancelEditing() }
+                                )
+                            }
+                        }
 
-                if (journalEntries.isEmpty() && !isEditing) {
-                    item(key = "empty_state") {
-                        EmptyStateCard()
+                        items(journalEntries, key = { it.id }) { entry ->
+                            JournalEntryCard(
+                                entry = entry,
+                                onEditClick = { appViewModel.startEditing(entry) }
+                            )
+                        }
+
+                        if (journalEntries.isEmpty() && !isEditing) {
+                            item(key = "empty_state") {
+                                EmptyStateCard()
+                            }
+                        }
                     }
                 }
             }
@@ -142,40 +168,246 @@ fun JournalScreen(
 private fun JournalHeader(
     habitName: String, 
     date: LocalDate,
-    onSettingsClick: () -> Unit
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onSettingsClick: () -> Unit,
+    isCalendarView: Boolean,
+    onViewToggle: (Boolean) -> Unit
 ) {
+    var isSearchVisible by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = spacing.large, vertical = spacing.medium)
     ) {
-        Text(
-            text = "${date.month.name} ${date.year}",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Gray,
-            letterSpacing = 1.sp
-        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = habitName,
-                fontSize = 28.sp,
+                text = "${date.month.name} ${date.year}",
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = Color.Gray,
+                letterSpacing = 1.sp
             )
+            
+            // View Switcher
+            Row(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(Color.LightGray.copy(alpha = 0.2f))
+                    .padding(4.dp)
+            ) {
+                IconButton(
+                    onClick = { onViewToggle(false) },
+                    modifier = Modifier.size(32.dp).background(if (!isCalendarView) Color.White else Color.Transparent, CircleShape)
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Outlined.List, 
+                        contentDescription = "List",
+                        modifier = Modifier.size(18.dp),
+                        tint = if (!isCalendarView) MaterialTheme.colorScheme.primary else Color.Gray
+                    )
+                }
+                IconButton(
+                    onClick = { onViewToggle(true) },
+                    modifier = Modifier.size(32.dp).background(if (isCalendarView) Color.White else Color.Transparent, CircleShape)
+                ) {
+                    Icon(
+                        Icons.Outlined.CalendarMonth, 
+                        contentDescription = "Calendar",
+                        modifier = Modifier.size(18.dp),
+                        tint = if (isCalendarView) MaterialTheme.colorScheme.primary else Color.Gray
+                    )
+                }
+            }
+        }
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (!isSearchVisible) {
+                Text(
+                    text = habitName,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                TextField(
+                    value = searchQuery,
+                    onValueChange = onSearchQueryChange,
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    placeholder = { Text("Search reflections...") },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        cursorColor = MaterialTheme.colorScheme.primary
+                    ),
+                    singleLine = true,
+                    trailingIcon = {
+                        IconButton(onClick = { 
+                            onSearchQueryChange("")
+                            isSearchVisible = false 
+                        }) {
+                            Icon(Icons.Default.Close, contentDescription = "Close search")
+                        }
+                    }
+                )
+            }
+            
             Row {
-                IconButton(onClick = { }) {
-                    Icon(Icons.Default.Search, contentDescription = "Search")
+                if (!isSearchVisible) {
+                    IconButton(onClick = { isSearchVisible = true }) {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
                 }
                 IconButton(onClick = onSettingsClick) {
                     Icon(Icons.Default.Settings, contentDescription = "Settings")
                 }
             }
         }
+    }
+}
+
+@Composable
+fun HabitCalendarView(
+    entries: List<JournalEntry>,
+    today: LocalDate
+) {
+    // Generate dates for current month
+    val firstDayOfMonth = LocalDate(today.year, today.month, 1)
+    val lastDayOfMonth = firstDayOfMonth.plus(1, DateTimeUnit.MONTH).minus(1, DateTimeUnit.DAY)
+    
+    val daysInMonth = (1..lastDayOfMonth.dayOfMonth).map { day ->
+        LocalDate(today.year, today.month, day)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = spacing.large)
+    ) {
+        // Weekday Headers (Starting from Sunday)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            listOf("S", "M", "T", "W", "T", "F", "S").forEach { day ->
+                Text(
+                    text = day,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray,
+                    fontSize = 12.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(spacing.medium))
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(7),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            userScrollEnabled = false
+        ) {
+            // First day offset (0 = Monday, 6 = Sunday)
+            // Adjusting for Sunday start: Sunday should be 0.
+            val firstDayOffset = (firstDayOfMonth.dayOfWeek.ordinal + 1) % 7
+            
+            items(firstDayOffset) {
+                Spacer(Modifier.fillMaxWidth())
+            }
+
+            items(daysInMonth) { date ->
+                val entry = entries.find { it.date == date }
+                val isToday = date == today
+                
+                CalendarDayItem(
+                    date = date,
+                    entry = entry,
+                    isToday = isToday
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(40.dp))
+        
+        // Legend
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            LegendItem(Color(0xFF4CAF50), "Success")
+            Spacer(modifier = Modifier.width(spacing.large))
+            LegendItem(Color.Red, "Missed")
+            Spacer(modifier = Modifier.width(spacing.large))
+            LegendItem(Color.LightGray.copy(alpha = 0.3f), "Future")
+        }
+    }
+}
+
+@Composable
+fun CalendarDayItem(
+    date: LocalDate,
+    entry: JournalEntry?,
+    isToday: Boolean
+) {
+    val backgroundColor = when {
+        entry == null -> Color.White
+        entry.isCompleted -> Color(0xFFE8F5E9)
+        else -> Color(0xFFFFEBEE)
+    }
+    
+    val indicatorColor = when {
+        entry == null -> Color.Transparent
+        entry.isCompleted -> Color(0xFF4CAF50)
+        else -> Color.Red
+    }
+
+    Box(
+        modifier = Modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(backgroundColor)
+            .border(
+                width = if (isToday) 2.dp else 0.dp,
+                color = if (isToday) MaterialTheme.colorScheme.primary else Color.Transparent,
+                shape = RoundedCornerShape(12.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = date.dayOfMonth.toString(),
+                fontSize = 14.sp,
+                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
+                color = if (isToday) MaterialTheme.colorScheme.primary else Color.Black
+            )
+            if (entry != null) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(indicatorColor)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun LegendItem(color: Color, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(color))
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(text = label, fontSize = 12.sp, color = Color.Gray)
     }
 }
 
