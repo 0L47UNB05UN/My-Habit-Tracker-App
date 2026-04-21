@@ -46,6 +46,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,16 +60,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.myhabittrackerapp.ui.theme.MyHabitTrackerAppTheme
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.myhabittrackerapp.ui.MainViewModel
 import com.example.myhabittrackerapp.ui.theme.spacing
 
 @Composable
-fun SettingsScreen() {
-    var isDarkMode by remember { mutableStateOf(false) }
-    var userName by remember { mutableStateOf("Elena Thorne") }
+fun SettingsScreen(
+    mainViewModel: MainViewModel = hiltViewModel()
+) {
+    val userPreferences by mainViewModel.userPreferencesFlow.collectAsState()
+    
     var dailyNudgeEnabled by remember { mutableStateOf(true) }
     var monthlyRecapEnabled by remember { mutableStateOf(false) }
     var reminderTime by remember { mutableStateOf("21:30") }
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -92,14 +97,14 @@ fun SettingsScreen() {
             ) {
                 item {
                     ProfileCard(
-                        userName = userName,
-                        onNameChange = { userName = it }
+                        userName = userPreferences.userName,
+                        onNameChange = { /* mainViewModel.updateUserName(it) */ }
                     )
                 }
                 item {
                     AppearanceSection(
-                        isDarkMode = isDarkMode,
-                        onThemeChange = { isDarkMode = it }
+                        isDarkMode = userPreferences.isDarkMode,
+                        onThemeChange = { mainViewModel.toggleDarkMode(it) }
                     )
                 }
                 item {
@@ -168,7 +173,6 @@ private fun ProfileCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Header image
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -177,7 +181,6 @@ private fun ProfileCard(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
                     )
             ) {
-                // Abstract pattern placeholder
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
@@ -200,7 +203,6 @@ private fun ProfileCard(
                 }
             }
 
-            // Profile section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -208,7 +210,6 @@ private fun ProfileCard(
                     .padding(horizontal = spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Avatar with camera button
                 Box(
                     modifier = Modifier
                         .size(96.dp)
@@ -228,7 +229,7 @@ private fun ProfileCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = userName.take(1).uppercase(),
+                            text = if(userName.isNotEmpty()) userName.take(1).uppercase() else "?",
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -260,7 +261,6 @@ private fun ProfileCard(
 
                 Spacer(modifier = Modifier.height(spacing.small))
 
-                // Name input
                 BasicTextField(
                     value = userName,
                     onValueChange = onNameChange,
@@ -275,6 +275,9 @@ private fun ProfileCard(
                             modifier = Modifier.fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
+                            if (userName.isEmpty()) {
+                                Text("Your Name", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                            }
                             innerTextField()
                         }
                     },
@@ -312,7 +315,6 @@ private fun AppearanceSection(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            //Light theme option
             ThemeOption(
                 isSelected = !isDarkMode,
                 onClick = { onThemeChange(false) },
@@ -337,7 +339,6 @@ private fun AppearanceSection(
                 },
                 label = "Light"
             )
-            // Dark theme option
             ThemeOption(
                 isSelected = isDarkMode,
                 onClick = { onThemeChange(true) },
@@ -437,7 +438,6 @@ private fun NotificationsSection(
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Daily Nudge
                 NotificationRow(
                     icon = Icons.Outlined.Notifications,
                     title = "Daily Nudge",
@@ -457,7 +457,6 @@ private fun NotificationsSection(
                     showDivider = true
                 )
 
-                // Reminder Time
                 NotificationRow(
                     icon = Icons.Outlined.Schedule,
                     title = "Reminder Time",
@@ -482,7 +481,6 @@ private fun NotificationsSection(
                     showDivider = true
                 )
 
-                // Monthly Recap
                 NotificationRow(
                     icon = Icons.Outlined.Summarize,
                     title = "Monthly Recap",
@@ -522,7 +520,6 @@ private fun NotificationRow(
             horizontalArrangement = Arrangement.spacedBy(spacing.large),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -537,7 +534,6 @@ private fun NotificationRow(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            // Text content
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -555,7 +551,6 @@ private fun NotificationRow(
                     )
                 }
             }
-            // Trailing content
             trailing()
         }
         if (showDivider) {
@@ -593,7 +588,6 @@ private fun DataPrivacySection() {
                     .padding(spacing.large),
                 verticalArrangement = Arrangement.spacedBy(spacing.large)
             ) {
-                // Warning message
                 Surface(
                     shape = RoundedCornerShape(spacing.small),
                     color = Color(0xFFFFF8E1).copy(alpha = 0.5f),
@@ -621,7 +615,6 @@ private fun DataPrivacySection() {
                     }
                 }
 
-                // Export button
                 Button(
                     onClick = { },
                     modifier = Modifier
@@ -645,7 +638,6 @@ private fun DataPrivacySection() {
                     )
                 }
 
-                // Clear data button
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -710,14 +702,5 @@ private fun SettingsFooter() {
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
             letterSpacing = 0.5.sp
         )
-    }
-}
-
-// Preview
-@Preview
-@Composable
-fun SettingsScreenPreview() {
-    MyHabitTrackerAppTheme {
-        SettingsScreen()
     }
 }

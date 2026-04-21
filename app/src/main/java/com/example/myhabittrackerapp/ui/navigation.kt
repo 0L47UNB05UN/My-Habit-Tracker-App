@@ -20,6 +20,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +34,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.myhabittrackerapp.ui.screens.DiscoverScreen
 import com.example.myhabittrackerapp.ui.screens.HabitScreenSettingsViewModel
 import com.example.myhabittrackerapp.ui.screens.HabitSettingsScreen
+import com.example.myhabittrackerapp.ui.screens.HomeScreen
 import com.example.myhabittrackerapp.ui.screens.JournalScreen
 import com.example.myhabittrackerapp.ui.screens.JournalScreenViewModel
 import com.example.myhabittrackerapp.ui.screens.MyHabitsScreen
@@ -51,81 +53,86 @@ fun MainScreen(
     
     val habitScreenViewModel: HabitScreenSettingsViewModel = hiltViewModel()
     val journalScreenViewModel: JournalScreenViewModel = hiltViewModel()
+    val mainViewModel: MainViewModel = hiltViewModel()
+
+    val userPreferences by mainViewModel.userPreferencesFlow.collectAsState()
     
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = modifier.fillMaxWidth()
-            ){
-                NavigationBar(
-                    modifier = modifier.fillMaxWidth(),
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                    tonalElevation = 8.dp
+            if (userPreferences.hasCompletedOnboarding) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start,
-                        modifier = modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+                    NavigationBar(
+                        modifier = modifier.fillMaxWidth(),
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                        tonalElevation = 8.dp
                     ) {
-                        NavigationBarItem(
-                            selected = currentRoute == "habit",
-                            onClick = {
-                                navController.navigate("habit") {
-                                    popUpTo(navController.graph.startDestinationId)
-                                    launchSingleTop = true
-                                }
-                            },
-                            icon = { Icon(Icons.Outlined.CheckCircle, contentDescription = "Habit") },
-                            label = { Text("Habit") }
-                        )
-                        NavigationBarItem(
-                            selected = currentRoute == "journal",
-                            onClick = {
-                                journalScreenViewModel.currentHabitId = null
-                                navController.navigate("journal") {
-                                    popUpTo(navController.graph.startDestinationId)
-                                    launchSingleTop = true
-                                }
-                            },
-                            icon = { Icon(Icons.Outlined.Book, contentDescription = "Journal") },
-                            label = { Text("Journal") }
-                        )
-                        NavigationBarItem(
-                            selected = currentRoute == "discover",
-                            onClick = {
-                                navController.navigate("discover") {
-                                    popUpTo(navController.graph.startDestinationId)
-                                    launchSingleTop = true
-                                }
-                            },
-                            icon = { Icon(Icons.Outlined.Explore, contentDescription = "Discover") },
-                            label = { Text("Discover") }
-                        )
-                        NavigationBarItem(
-                            selected = currentRoute == "settings",
-                            onClick = {
-                                navController.navigate("settings") {
-                                    popUpTo(navController.graph.startDestinationId)
-                                    launchSingleTop = true
-                                }
-                            },
-                            icon = { Icon(Icons.Outlined.Settings, contentDescription = "Settings") },
-                            label = { Text("Settings") }
-                        )
-                        NavigationBarItem(
-                            selected = currentRoute == "home",
-                            onClick = {
-                                navController.navigate("home") {
-                                    popUpTo(navController.graph.startDestinationId)
-                                    launchSingleTop = true
-                                }
-                            },
-                            icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
-                            label = { Text("Home") }
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start,
+                            modifier = modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+                        ) {
+                            NavigationBarItem(
+                                selected = currentRoute == "home",
+                                onClick = {
+                                    navController.navigate("home") {
+                                        popUpTo(navController.graph.startDestinationId)
+                                        launchSingleTop = true
+                                    }
+                                },
+                                icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
+                                label = { Text("Home") }
+                            )
+                            NavigationBarItem(
+                                selected = currentRoute == "habit",
+                                onClick = {
+                                    navController.navigate("habit") {
+                                        popUpTo(navController.graph.startDestinationId)
+                                        launchSingleTop = true
+                                    }
+                                },
+                                icon = { Icon(Icons.Outlined.CheckCircle, contentDescription = "Habit") },
+                                label = { Text("Habit") }
+                            )
+                            NavigationBarItem(
+                                selected = currentRoute == "journal",
+                                onClick = {
+                                    journalScreenViewModel.currentHabitId = null
+                                    navController.navigate("journal") {
+                                        popUpTo(navController.graph.startDestinationId)
+                                        launchSingleTop = true
+                                    }
+                                },
+                                icon = { Icon(Icons.Outlined.Book, contentDescription = "Journal") },
+                                label = { Text("Journal") }
+                            )
+                            NavigationBarItem(
+                                selected = currentRoute == "discover",
+                                onClick = {
+                                    navController.navigate("discover") {
+                                        popUpTo(navController.graph.startDestinationId)
+                                        launchSingleTop = true
+                                    }
+                                },
+                                icon = { Icon(Icons.Outlined.Explore, contentDescription = "Discover") },
+                                label = { Text("Discover") }
+                            )
+                            NavigationBarItem(
+                                selected = currentRoute == "settings",
+                                onClick = {
+                                    navController.navigate("settings") {
+                                        popUpTo(navController.graph.startDestinationId)
+                                        launchSingleTop = true
+                                    }
+                                },
+                                icon = { Icon(Icons.Outlined.Settings, contentDescription = "Settings") },
+                                label = { Text("Settings") }
+                            )
+                        }
                     }
                 }
             }
@@ -135,10 +142,24 @@ fun MainScreen(
         paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = "home",
+            startDestination = if (userPreferences.hasCompletedOnboarding) "home" else "onboarding",
         ) {
+            composable("onboarding") {
+                OnboardingScreen(
+                    paddingValues = paddingValues,
+                    onStartJourney = { name, _ ->
+                        mainViewModel.completeOnboarding(name)
+                        navController.navigate("home") {
+                            popUpTo("onboarding") { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable("home") {
-                OnboardingScreen(paddingValues)
+                HomeScreen(
+                    habitViewModel = habitScreenViewModel,
+                    mainViewModel = mainViewModel
+                )
             }
             composable("discover") {
                 DiscoverScreen(
@@ -163,7 +184,7 @@ fun MainScreen(
                 )
             }
             composable("settings"){
-                SettingsScreen()
+                SettingsScreen(mainViewModel)
             }
             composable("habit"){
                 MyHabitsScreen(

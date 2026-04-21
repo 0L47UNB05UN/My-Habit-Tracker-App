@@ -1,6 +1,7 @@
 package com.example.myhabittrackerapp.ui.screens
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
@@ -13,6 +14,7 @@ import com.example.myhabittrackerapp.model.Habits
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -25,10 +27,13 @@ class HabitScreenSettingsViewModel @Inject constructor(
     var subtitle by mutableStateOf("")
     var habitType by mutableStateOf(HabitType.Start)
     var dailyReminderEnabled by mutableStateOf(true)
-    var reminderTime by mutableStateOf("19:00") // Use 24h format consistently
+    var reminderTime by mutableStateOf("19:00")
     var frequency by mutableStateOf("Every Day")
 
     var currentHabit by mutableStateOf<Habits?>(null)
+
+    // Store streaks for each habit ID
+    val habitStreaks = mutableStateMapOf<Long, Int>()
 
     val habits: StateFlow<List<Habits>> = habitRepository.allHabits
         .stateIn(
@@ -36,6 +41,17 @@ class HabitScreenSettingsViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
+
+    init {
+        // Automatically update streaks whenever habits change
+        viewModelScope.launch {
+            habits.collectLatest { habitList ->
+                habitList.forEach { habit ->
+                    habitStreaks[habit.id] = habitRepository.getStreakForHabit(habit.id)
+                }
+            }
+        }
+    }
 
     fun resetCurrentHabit() {
         currentHabit = null

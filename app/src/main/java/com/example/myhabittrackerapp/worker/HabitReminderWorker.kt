@@ -6,12 +6,10 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.example.myhabittrackerapp.MainActivity
 import com.example.myhabittrackerapp.model.HabitRepository
@@ -22,7 +20,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import java.util.concurrent.TimeUnit
 
 @HiltWorker
 class HabitReminderWorker @AssistedInject constructor(
@@ -33,42 +30,38 @@ class HabitReminderWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
+        Log.d("HabitReminderWorker", "Background check started...")
         val habits = habitRepository.allHabits.first()
         val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
         val currentTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
         
+        Log.d("HabitReminderWorker", "Checking ${habits.size} habits. Current time: ${currentTime.hour}:${currentTime.minute}")
+
         habits.forEach { habit ->
             if (habit.isReminderEnabled && habit.reminderTime != null) {
                 val timeParts = habit.reminderTime.split(":")
-                val reminderHour = timeParts[0].toInt()
-                val reminderMinute = timeParts[1].toInt()
+                val reminderHour = timeParts[0].toIntOrNull() ?: 0
+                val reminderMinute = timeParts[1].toIntOrNull() ?: 0
+
+                Log.d("HabitReminderWorker", "Habit: ${habit.title}, Reminder: $reminderHour:$reminderMinute")
 
                 // If current time is past reminder time
                 if (currentTime.hour > reminderHour || (currentTime.hour == reminderHour && currentTime.minute >= reminderMinute)) {
-                    // Check if journal entry exists for today
                     val entry = journalRepository.getJournalEntryForHabitAndDate(habit.id, today)
                     if (entry == null) {
-                        showNotification(habit.title)
+                        Log.d("HabitReminderWorker", "Triggering notification for: ${habit.title}")
+                        showNotification(habit.id, habit.title)
+                    } else {
+                        Log.d("HabitReminderWorker", "Journal already exists for today for: ${habit.title}")
                     }
                 }
             }
         }
 
-        // Reschedule itself to run again in 2 minutes (bypassing the 15-min periodic limit)
-        val nextWorkRequest = OneTimeWorkRequestBuilder<HabitReminderWorker>()
-            .setInitialDelay(2, TimeUnit.MINUTES)
-            .build()
-        
-        WorkManager.getInstance(applicationContext).enqueueUniqueWork(
-            "habit_reminder_work_recursive",
-            ExistingWorkPolicy.REPLACE,
-            nextWorkRequest
-        )
-
         return Result.success()
     }
 
-    private fun showNotification(habitTitle: String) {
+    private fun showNotification(habitId: Long, habitTitle: String) {
         val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channelId = "habit_reminders"
 
@@ -87,9 +80,10 @@ class HabitReminderWorker @AssistedInject constructor(
 
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("HABIT_ID", habitId)
         }
         val pendingIntent = PendingIntent.getActivity(
-            applicationContext, 0, intent,
+            applicationContext, habitId.toInt(), intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -103,6 +97,6 @@ class HabitReminderWorker @AssistedInject constructor(
             .setContentIntent(pendingIntent)
             .build()
 
-        notificationManager.notify(habitTitle.hashCode(), notification)
+        notificationManager.notify(habitId.hashCode(), notification)
     }
 }

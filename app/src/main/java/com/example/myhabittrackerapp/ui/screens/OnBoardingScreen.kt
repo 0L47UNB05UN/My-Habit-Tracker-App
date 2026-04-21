@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -69,11 +68,12 @@ import com.example.myhabittrackerapp.ui.theme.spacing
 @Composable
 fun OnboardingScreen(
     paddingValues: PaddingValues,
-    onStartJourney: () -> Unit = {}
+    onStartJourney: (String, List<String>) -> Unit = { _, _ -> }
 ) {
     var userName by remember { mutableStateOf("") }
     var habitInput by remember { mutableStateOf("") }
-    val habits = remember { mutableStateOf(listOf("Read for 10 mins", "No coffee after 2pm", "Reading", "Sweeping", "Cleaning", "Stop drinking while driving" )) }
+    val habits = remember { mutableStateOf(listOf("Read for 10 mins", "No coffee after 2pm")) }
+    
     Surface(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -132,7 +132,7 @@ fun OnboardingScreen(
 
             }
             item {
-                BottomSection(onStartJourney = onStartJourney)
+                BottomSection(onStartJourney = { onStartJourney(userName, habits.value) })
             }
 
         }

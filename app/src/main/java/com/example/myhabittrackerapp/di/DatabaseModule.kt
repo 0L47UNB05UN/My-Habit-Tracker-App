@@ -1,6 +1,10 @@
 package com.example.myhabittrackerapp.di
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.example.myhabittrackerapp.model.AppDatabase
 import com.example.myhabittrackerapp.model.HabitDao
@@ -38,9 +42,20 @@ object DatabaseModule {
 
     @Singleton
     @Provides
-    fun provideHabitRepository(habitDao: HabitDao): HabitRepository = HabitRepository(habitDao)
+    fun provideHabitRepository(
+        habitDao: HabitDao,
+        journalDao: JournalDao
+    ): HabitRepository = HabitRepository(habitDao, journalDao)
 
     @Singleton
     @Provides
     fun provideJournalRepository(journalDao: JournalDao): JournalRepository = JournalRepository(journalDao)
+
+    @Singleton
+    @Provides
+    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
+        return PreferenceDataStoreFactory.create(
+            produceFile = { context.preferencesDataStoreFile("user_preferences") }
+        )
+    }
 }

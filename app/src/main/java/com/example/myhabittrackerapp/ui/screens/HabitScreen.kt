@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.AddCircle
-import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DoNotDisturbOn
 import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material3.Button
@@ -62,6 +61,7 @@ fun MyHabitsScreen(
     onCheckClick: (Long) -> Unit = {}
 ) {
     val habits by appViewModel.habits.collectAsState()
+    val streaks = appViewModel.habitStreaks
 
     Box(
         modifier = Modifier
@@ -95,19 +95,22 @@ fun MyHabitsScreen(
                     )
                 }
                 
-                items(habits.filter { it.habitType == HabitType.Start }) { habit ->
-                    HabitCard(
-                        title = habit.title,
-                        subtitle = habit.subtitle,
-                        color = Color(habit.colorArgb),
-                        habitType = habit.habitType,
-                        icon = Icons.Outlined.WaterDrop, // Temporary fix for ImageVector
-                        onNavigate = {
-                            appViewModel.markCurrentHabit(habit)
-                            onNavigate()
-                        },
-                        onCheckClick = { onCheckClick(habit.id) }
-                    )
+                items(habits.filter { it.habitType == HabitType.Start }, key = { it.id }) { habit ->
+                    Box(modifier = Modifier.animateItem()) {
+                        HabitCard(
+                            title = habit.title,
+                            subtitle = habit.subtitle,
+                            color = Color(habit.colorArgb),
+                            habitType = habit.habitType,
+                            icon = Icons.Outlined.WaterDrop,
+                            streak = streaks[habit.id] ?: 0,
+                            onNavigate = {
+                                appViewModel.markCurrentHabit(habit)
+                                onNavigate()
+                            },
+                            onCheckClick = { onCheckClick(habit.id) }
+                        )
+                    }
                 }
 
                 item {
@@ -118,19 +121,22 @@ fun MyHabitsScreen(
                     )
                 }
 
-                items(habits.filter { it.habitType == HabitType.Stop }) { habit ->
-                    HabitCard(
-                        title = habit.title,
-                        subtitle = habit.subtitle,
-                        color = Color(habit.colorArgb),
-                        habitType = habit.habitType,
-                        icon = Icons.Outlined.DoNotDisturbOn, // Temporary fix
-                        onNavigate = {
-                            appViewModel.markCurrentHabit(habit)
-                            onNavigate()
-                        },
-                        onCheckClick = { onCheckClick(habit.id) }
-                    )
+                items(habits.filter { it.habitType == HabitType.Stop }, key = { it.id }) { habit ->
+                    Box(modifier = Modifier.animateItem()) {
+                        HabitCard(
+                            title = habit.title,
+                            subtitle = habit.subtitle,
+                            color = Color(habit.colorArgb),
+                            habitType = habit.habitType,
+                            icon = Icons.Outlined.DoNotDisturbOn,
+                            streak = streaks[habit.id] ?: 0,
+                            onNavigate = {
+                                appViewModel.markCurrentHabit(habit)
+                                onNavigate()
+                            },
+                            onCheckClick = { onCheckClick(habit.id) }
+                        )
+                    }
                 }
             }
         }
@@ -205,6 +211,7 @@ fun HabitCard(
     subtitle: String,
     color: Color,
     habitType: HabitType,
+    streak: Int = 0,
     onNavigate: () -> Unit,
     onCheckClick: () -> Unit
 ){
@@ -263,12 +270,23 @@ fun HabitCard(
                         color = MaterialTheme.colorScheme.onBackground,
                         textAlign = TextAlign.Left
                     )
-                    Text(
-                        text = subtitle,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Left
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = subtitle,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Left
+                        )
+                        if (streak > 0) {
+                            Spacer(modifier = Modifier.width(spacing.small))
+                            Text(
+                                text = "🔥 $streak",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFF4511E)
+                            )
+                        }
+                    }
                 }
                 
                 // Check Action

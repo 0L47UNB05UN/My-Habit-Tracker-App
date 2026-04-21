@@ -14,6 +14,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -31,6 +32,7 @@ class JournalScreenViewModel @Inject constructor(
     private val habitRepository: HabitRepository
 ) : ViewModel() {
     val today: LocalDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    
     var currentEntry by mutableStateOf("")
     var isCompleted by mutableStateOf(true)
     var selectedMood by mutableStateOf<Mood?>(null)
@@ -43,6 +45,8 @@ class JournalScreenViewModel @Inject constructor(
         get() = _currentHabitId.value
         set(value) { _currentHabitId.value = value }
 
+    var searchQuery by mutableStateOf("")
+
     val currentHabitName: StateFlow<String> = _currentHabitId.map { id ->
         if (id != null) {
             habitRepository.getHabitById(id)?.title ?: "Daily Journal"
@@ -51,19 +55,26 @@ class JournalScreenViewModel @Inject constructor(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "Daily Journal")
 
-    val journalEntries: StateFlow<List<JournalEntry>> = _currentHabitId
-        .flatMapLatest { id ->
+    val journalEntries: StateFlow<List<JournalEntry>> = combine(
+        _currentHabitId.flatMapLatest { id ->
             if (id != null) {
                 journalRepository.getJournalEntriesForHabit(id)
             } else {
                 journalRepository.getAllJournalEntries()
             }
+        },
+        snapshotFlow { searchQuery }
+    ) { entries, query ->
+        if (query.isBlank()) {
+            entries
+        } else {
+            entries.filter { it.content.contains(query, ignoreCase = true) }
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = emptyList()
+    )
 
     fun startEditing(entry: JournalEntry) {
         editingEntryId = entry.id
@@ -98,3 +109,5 @@ class JournalScreenViewModel @Inject constructor(
         }
     }
 }
+
+private fun <T> snapshotFlow(block: () -> T) = androidx.compose.runtime.snapshotFlow(block)
